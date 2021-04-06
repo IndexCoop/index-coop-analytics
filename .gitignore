@@ -1,11 +1,15 @@
+
+.DS_Store
+
 ## R
 # History files
 .Rhistory
 .Rapp.history
 
 # Session Data files
-.RData
-.csv
+**/*.RData
+**/*.csv
+**/*.rds
 
 # User-specific files
 .Ruserdata
@@ -21,6 +25,7 @@
 
 # RStudio files
 .Rproj.user/
+*.Rproj
 
 # produced vignettes
 vignettes/*.html
