@@ -1,7 +1,7 @@
 -- https://duneanalytics.com/queries/27981/56548
 
 -- ETH2x-FLI Supply Breakdown
-WITH uniswap_pairs AS (
+WITH fli_uniswap_pairs AS (
 
   SELECT
     token0,
@@ -13,16 +13,10 @@ WITH uniswap_pairs AS (
     pair
   FROM uniswap_v2."Factory_evt_PairCreated" pairsraw
   WHERE pair = '\xf91c12dae1313d0be5d7a27aa559b1171cc1eac5'
---   LEFT JOIN erc20.tokens erc20 ON pairsraw.token0 = erc20.contract_address
---   LEFT JOIN erc20.tokens erc202 ON pairsraw.token1 = erc202.contract_address
--- --   WHERE token0 IN (SELECT DISTINCT contract_address FROM erc20.tokens WHERE decimals > 0)
--- --     AND token1 IN (SELECT DISTINCT contract_address FROM erc20.tokens WHERE decimals > 0)
---   WHERE erc20.symbol = 'DPI' OR
---     erc202.symbol = 'DPI'
   
 ),
 
-uniswap_reserves AS (
+fli_uniswap_reserves AS (
 
   SELECT
     AVG(s.reserve0 / 10^p.decimals0) AS reserve0,
@@ -32,12 +26,12 @@ uniswap_reserves AS (
     p.symbol0,
     p.symbol1
   FROM uniswap_v2."Pair_evt_Sync" s
-  JOIN uniswap_pairs p ON s.contract_address = p.pair
+  JOIN fli_uniswap_pairs p ON s.contract_address = p.pair
   GROUP BY 3, 4, 5, 6
 
 ),
 
-uniswap_supply AS (
+fli_uniswap_supply AS (
 
     SELECT
         SUM(CASE
@@ -48,28 +42,28 @@ uniswap_supply AS (
         dt,
         'FLI' AS product,
         'uniswap' AS project
-    FROM uniswap_reserves
+    FROM fli_uniswap_reserves
     GROUP BY 2, 3, 4
  
 ),
 
-liquidity_supply_temp AS (
+fli_liquidity_supply_temp AS (
 
-SELECT dt, reserves FROM uniswap_supply
+SELECT dt, reserves FROM fli_uniswap_supply
 
 ),
 
-liquidity_supply AS (
+fli_liquidity_supply AS (
 
     SELECT
         dt,
         SUM(reserves) AS reserves
-    FROM liquidity_supply_temp
+    FROM fli_liquidity_supply_temp
     GROUP BY 1
 
 ),
 
-mint_burn AS (
+fli_mint_burn AS (
 
     SELECT 
         date_trunc('day', evt_block_time) AS day, 
@@ -88,28 +82,28 @@ mint_burn AS (
     GROUP BY 1
 ),
 
-days AS (
+fli_days AS (
     
     SELECT generate_series('2021-03-13'::timestamp, date_trunc('day', NOW()), '1 day') AS day -- Generate all days since the first contract
     
 ),
 
-units AS (
+fli_units AS (
 
     SELECT
         d.day,
         COALESCE(m.amount, 0) AS amount
-    FROM days d
-    LEFT JOIN mint_burn m ON d.day = m.day
+    FROM fli_days d
+    LEFT JOIN fli_mint_burn m ON d.day = m.day
     
 ),
 
-total_supply AS (
+fli_total_supply AS (
 
 SELECT 
     day, 
     SUM(amount) OVER (ORDER BY day) AS fli
-FROM units
+FROM fli_units
 
 ),
 --fli price feed
@@ -173,169 +167,28 @@ FROM fli_temp
 fli_price_feed AS (
 
 SELECT
-    *
+    date_trunc('day', hour) AS dt,
+    AVG(usd_price) AS price
 FROM fli_feed
 WHERE usd_price IS NOT NULL
+GROUP BY 1
 
 )
-
--- mint_burn_lp AS (
-
---   SELECT
---     tr."from" AS address,
---     -tr.value / 1e18 AS amount,
---     date_trunc('day', evt_block_time) AS evt_block_day,
---     'burn' AS type,
---     evt_tx_hash
---   FROM erc20."ERC20_evt_Transfer" tr
---   WHERE contract_address = '\x4d5ef58aac27d99935e5b6b4a6778ff292059991'
---     AND tr."to" = '\x0000000000000000000000000000000000000000'
-
---   UNION ALL
-
---   SELECT
---     tr."to" AS address,
---     tr.value / 1e18 AS amount,
---     date_trunc('day', evt_block_time) AS evt_block_day,
---     'mint' AS type,
---     evt_tx_hash
---   FROM erc20."ERC20_evt_Transfer" tr
---   WHERE contract_address = '\x4d5ef58aac27d99935e5b6b4a6778ff292059991'
---     AND tr."from" = '\x0000000000000000000000000000000000000000'
-
--- ),
-
--- mint_burn_lp_temp AS (
-
--- SELECT
---     evt_block_day,
---     SUM(amount) AS lp_amount
--- FROM mint_burn_lp
--- GROUP BY 1
--- ORDER BY 1
-
--- ),
-
--- lp AS (
-
--- SELECT
---     *,
---     SUM(lp_amount) OVER (ORDER BY evt_block_day) AS lp_running_amount
--- FROM mint_burn_lp_temp
-
--- ),
-
--- stake_unstake_lm AS (
-
---   SELECT
---     tr."from" AS address,
---     tr.value / 1e18 AS amount,
---     date_trunc('day', evt_block_time) AS evt_block_day,
---     'stake' AS type,
---     evt_tx_hash
---   FROM erc20."ERC20_evt_Transfer" tr
---   WHERE contract_address = '\x4d5ef58aac27d99935e5b6b4a6778ff292059991'
---     AND tr."to" IN ('\x8f06FBA4684B5E0988F215a47775Bb611Af0F986', '\xB93b505Ed567982E2b6756177ddD23ab5745f309')
-
---   UNION ALL
-
---   SELECT
---     tr."to" AS address,
---     -tr.value / 1e18 AS amount,
---     date_trunc('day', evt_block_time) AS evt_block_day,
---     'unstake' AS type,
---     evt_tx_hash
---   FROM erc20."ERC20_evt_Transfer" tr
---   WHERE contract_address = '\x4d5ef58aac27d99935e5b6b4a6778ff292059991'
---     AND tr."from" IN ('\x8f06FBA4684B5E0988F215a47775Bb611Af0F986', '\xB93b505Ed567982E2b6756177ddD23ab5745f309')
-
--- ),
-
--- stake_unstake_lm_temp AS (
-
--- SELECT
---     evt_block_day,
---     SUM(amount) AS lm_amount
--- FROM stake_unstake_lm
--- GROUP BY 1
--- ORDER BY 1
-
--- ),
-
--- lm AS (
-
--- SELECT
---     *,
---     SUM(lm_amount) OVER (ORDER BY evt_block_day) AS lm_running_amount
--- FROM stake_unstake_lm_temp
-
--- ),
-
--- lp_lm AS (
-
---     SELECT 
---         lp.*,
---         COALESCE(lm.lm_amount, 0) AS lm_amount,
---         COALESCE(lm.lm_running_amount, 0) AS lm_running_amount,
---         COALESCE(lm.lm_running_amount / lp.lp_running_amount, 0) AS perc_lp_lm
---     FROM lp
---     LEFT JOIN lm USING (evt_block_day)
-    
--- ),
-
--- dpi_index_rewards AS (
-
---   SELECT
---     tr."to" AS address,
---     tr.value / 1e18 AS amount,
---     date_trunc('day', evt_block_time) AS evt_block_day,
---     'reward' AS type,
---     evt_tx_hash
---   FROM erc20."ERC20_evt_Transfer" tr
---   WHERE contract_address = '\x0954906da0bf32d5479e25f46056d22f08464cab'
---     AND tr."from" IN ('\x8f06FBA4684B5E0988F215a47775Bb611Af0F986', '\xB93b505Ed567982E2b6756177ddD23ab5745f309')
-
--- ),
-
--- dpi_daily_index_rewards AS (
-
--- SELECT
---     evt_block_day,
---     SUM(amount) AS amount
--- FROM dpi_index_rewards
--- GROUP BY 1
--- ORDER BY 1
-
--- ),
-
--- dpi_7day_avg_index_rewards AS (
-
---     SELECT
---         evt_block_day,
---         AVG(amount) OVER (ORDER BY evt_block_day ROWS BETWEEN 7 PRECEDING AND CURRENT ROW) AS index
---     FROM dpi_daily_index_rewards
--- )
 
 SELECT
     DISTINCT
     t.day,
     'ETH2X-FLI' AS product,
     t.fli AS total,
-    l.reserves AS liquidity,
+    0 AS incentivized,
     t.fli - 0 AS unincentivized,
-    0 AS incentivized
-    -- l.reserves AS liquidity,
-    -- m.reserves AS liquidity_with_incentive_option,
-    -- i.perc_lp_lm AS liquidity_with_incentive_staked_perc,
-    -- COALESCE(d.index, 0) AS avg_index_rewarded
-    -- t.fli * p.usd_price AS tvl,
-    -- i.reserves * p.usd_price AS itvl,
-    -- (t.fli - i.reserves) * p.usd_price AS utvl,
-    -- (t.fli - i.reserves) / t.fli AS uperc
-FROM total_supply t
-LEFT JOIN liquidity_supply l ON t.day = l.dt
+    l.reserves AS liquidity,
+    t.fli * p.price AS tvl,
+    0 * p.price AS itvl,
+    (t.fli - 0) * p.price AS utvl,
+    l.reserves * p.price AS liquidity_value,
+    p.price
+FROM fli_total_supply t
+LEFT JOIN fli_liquidity_supply l ON t.day = l.dt
+LEFT JOIN fli_price_feed p on t.day = p.dt
 WHERE t.day >= '2021-03-14'
--- LEFT JOIN lp_w_lm_option_supply m ON t.day = m.dt
--- LEFT JOIN lp_lm i ON t.day = i.evt_block_day
--- LEFT JOIN dpi_7day_avg_index_rewards d ON t.day = d.evt_block_day
--- JOIN fli_price_feed p ON t.day = p.hour
