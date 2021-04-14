@@ -589,7 +589,11 @@ SELECT
     exposure,
     cohort,
     MIN(dt) AS min_dt,
+<<<<<<< HEAD
     COUNT(DISTINCT address) AS addresses
+=======
+    COUNT(address) AS addresses
+>>>>>>> add exposure distributions
 FROM dpi_user_base
 GROUP BY 1, 2
 ORDER BY 3
