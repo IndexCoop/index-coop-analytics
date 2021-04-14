@@ -13,10 +13,12 @@ dat <- read_csv('data/DPI_Retention_Base_2021_04_06.csv')
 # identify contracts / arb bots
 temp <- dat %>% 
   group_by(address, date(ymd_hms(evt_block_minute))) %>% 
-  summarize(n_amount = sum(amount), n_tx = n())
+  summarize(n_amount = sum(amount), 
+            n_movements = n(), 
+            n_tx_hash = n_distinct(evt_tx_hash))
   
 contract_addresses <- temp %>%
-  filter(n_tx >= 2, n_amount <= 1e-14) %>%
+  filter(n_movements >= 2, n_amount <= 1e-14) %>%
   distinct(address) %>%
   pull(address)
 
