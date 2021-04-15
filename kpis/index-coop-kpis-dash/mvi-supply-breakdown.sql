@@ -8,42 +8,20 @@
 WITH mvi_uniswap_pairs AS (
 
   SELECT
-    '\x72e364f2abdc788b7e918bc238b21f109cd634d7'::bytea AS token0,
-    18 as decimals0,
-    'MVI' as symbol0,
-    '\xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'::bytea AS token1,
-    18 as decimals1,
-    'wETH' as symbol1,
-    '\x4d3C5dB2C68f6859e0Cd05D080979f597DD64bff'::bytea AS pair
---   FROM uniswap_v2."Factory_evt_PairCreated" pairsraw
---   LEFT JOIN erc20.tokens erc20 ON pairsraw.token0 = erc20.contract_address
---   LEFT JOIN erc20.tokens erc202 ON pairsraw.token1 = erc202.contract_address
--- --   WHERE token0 IN (SELECT DISTINCT contract_address FROM erc20.tokens WHERE decimals > 0)
--- --     AND token1 IN (SELECT DISTINCT contract_address FROM erc20.tokens WHERE decimals > 0)
---   WHERE erc20.symbol = 'MVI' OR
---     erc202.symbol = 'MVI'
+    token0,
+    erc20.decimals as decimals0,
+    erc20.symbol as symbol0,
+    token1,
+    erc202.decimals as decimals1,
+    erc202.symbol as symbol1,
+    pair
+  FROM uniswap_v2."Factory_evt_PairCreated" pairsraw
+  LEFT JOIN erc20.tokens erc20 ON pairsraw.token0 = erc20.contract_address
+  LEFT JOIN erc20.tokens erc202 ON pairsraw.token1 = erc202.contract_address
+  WHERE erc20.symbol = 'MVI' OR
+    erc202.symbol = 'MVI'
 
 ),
-
--- WITH uniswap_pairs AS (
-
---   SELECT
---     token0,
---     erc20.decimals as decimals0,
---     erc20.symbol as symbol0,
---     token1,
---     erc202.decimals as decimals1,
---     erc202.symbol as symbol1,
---     pair
---   FROM uniswap_v2."Factory_evt_PairCreated" pairsraw
---   LEFT JOIN erc20.tokens erc20 ON pairsraw.token0 = erc20.contract_address
---   LEFT JOIN erc20.tokens erc202 ON pairsraw.token1 = erc202.contract_address
--- --   WHERE token0 IN (SELECT DISTINCT contract_address FROM erc20.tokens WHERE decimals > 0)
--- --     AND token1 IN (SELECT DISTINCT contract_address FROM erc20.tokens WHERE decimals > 0)
---   WHERE erc20.symbol = 'MVI' OR
---     erc202.symbol = 'MVI'
-  
--- ),
 
 mvi_uniswap_reserves AS (
 
