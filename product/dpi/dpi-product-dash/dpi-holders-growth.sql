@@ -590,10 +590,14 @@ SELECT
     cohort,
     MIN(dt) AS min_dt,
 <<<<<<< HEAD
+<<<<<<< HEAD
     COUNT(DISTINCT address) AS addresses
 =======
     COUNT(address) AS addresses
 >>>>>>> add exposure distributions
+=======
+    COUNT(DISTINCT address) AS addresses
+>>>>>>> update dpi holders growth
 FROM dpi_user_base
 GROUP BY 1, 2
 ORDER BY 3
