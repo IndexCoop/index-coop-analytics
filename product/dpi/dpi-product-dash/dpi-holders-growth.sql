@@ -589,7 +589,7 @@ SELECT
     exposure,
     cohort,
     MIN(dt) AS min_dt,
-    COUNT(address) AS addresses
+    COUNT(DISTINCT address) AS addresses
 FROM dpi_user_base
 GROUP BY 1, 2
 ORDER BY 3
