@@ -8,7 +8,7 @@ library(lubridate)
 #     consider turning this into a shiny dashboard for the MVI methodologists to use
 
 # DeFi (to be used as an example)
-r <- GET('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&category=decentralized_finance_defi')
+r <- GET('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&category=non-fungible-tokens-nft')
 
 coins <- content(r)
 
@@ -37,3 +37,5 @@ for(i in 1:length(coins)) {
 }
 
 View(final)
+
+write_csv(final, "mvi_token_screening_04_19_2021.csv")
