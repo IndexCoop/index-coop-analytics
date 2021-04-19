@@ -29,12 +29,19 @@ balancer_add AS (
   SELECT
     tr."from" AS address,
     tr.value / 1e18 AS amount,
-    date_trunc('minute', evt_block_time) AS evt_block_minute,
+    date_trunc('day', evt_block_time) AS evt_block_day,
     'balancer_add' AS type,
     evt_tx_hash
   FROM erc20."ERC20_evt_Transfer" tr
   WHERE contract_address = '\x1494ca1f11d487c2bbe4543e90080aeba4ba3c2b'
-    AND tr."to" = '\x0bcaea3571448877ff875bc3825ccf54e5d04df0'
+    AND evt_tx_hash IN (
+    
+        SELECT
+            evt_tx_hash
+        FROM balancer."BPool_evt_LOG_JOIN"
+        WHERE "tokenIn" = '\x1494ca1f11d487c2bbe4543e90080aeba4ba3c2b'
+        
+    )
 
 ),
 
@@ -43,12 +50,19 @@ balancer_remove AS (
   SELECT
     tr."to" AS address,
     -tr.value / 1e18 AS amount,
-    date_trunc('minute', evt_block_time) AS evt_block_minute,
+    date_trunc('day', evt_block_time) AS evt_block_day,
     'balancer_remove' AS type,
     evt_tx_hash
   FROM erc20."ERC20_evt_Transfer" tr
   WHERE contract_address = '\x1494ca1f11d487c2bbe4543e90080aeba4ba3c2b'
-    AND tr."from" = '\x0bcaea3571448877ff875bc3825ccf54e5d04df0'
+    AND evt_tx_hash IN (
+    
+        SELECT
+            evt_tx_hash
+        FROM balancer."BPool_evt_LOG_EXIT"
+        WHERE "tokenOut" = '\x1494ca1f11d487c2bbe4543e90080aeba4ba3c2b'
+        
+    )
     
 ),
 

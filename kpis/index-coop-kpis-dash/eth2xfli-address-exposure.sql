@@ -34,7 +34,14 @@ balancer_add AS (
     evt_tx_hash
   FROM erc20."ERC20_evt_Transfer" tr
   WHERE contract_address = '\xaa6e8127831c9de45ae56bb1b0d4d4da6e5665bd'
-    AND tr."to" = '\x83941a2d3cD426546eF4672376F6364fe69EeabD'
+    AND evt_tx_hash IN (
+    
+        SELECT
+            evt_tx_hash
+        FROM balancer."BPool_evt_LOG_JOIN"
+        WHERE "tokenIn" = '\xaa6e8127831c9de45ae56bb1b0d4d4da6e5665bd'
+        
+    )
 
 ),
 
@@ -48,8 +55,15 @@ balancer_remove AS (
     evt_tx_hash
   FROM erc20."ERC20_evt_Transfer" tr
   WHERE contract_address = '\xaa6e8127831c9de45ae56bb1b0d4d4da6e5665bd'
-    AND tr."from" = '\x83941a2d3cD426546eF4672376F6364fe69EeabD'
-
+    AND evt_tx_hash IN (
+    
+        SELECT
+            evt_tx_hash
+        FROM balancer."BPool_evt_LOG_EXIT"
+        WHERE "tokenOut" = '\xaa6e8127831c9de45ae56bb1b0d4d4da6e5665bd'
+        
+    )
+    
 ),
 
 uniswap_add AS (
