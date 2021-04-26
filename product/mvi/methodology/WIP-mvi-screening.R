@@ -7,10 +7,14 @@ library(lubridate)
 #     the idea is to query for metaverse categories and return tokens that meet a minimum criteria
 #     consider turning this into a shiny dashboard for the MVI methodologists to use
 
+categories <- c("non-fungible-tokens-nft", "music", "metaverse", "sports", "gaming")
+
 # DeFi (to be used as an example)
 r <- GET('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&category=non-fungible-tokens-nft')
 
+r <- GET('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&category=gaming')
 coins <- content(r)
+coins
 
 for(i in 1:length(coins)) {
   
