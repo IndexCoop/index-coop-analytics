@@ -8,15 +8,17 @@ library(zoo)
 # base data is pulled from the DPI Retention Base query on Dune: https://duneanalytics.com/queries/16759
 # SQL also found in dpi_retention_base.sql
 # run the query on dune, download it and save it in the data/ directory
-dat <- read_csv('data/DPI_Retention_Base_2021_04_06.csv')
+dat <- read_csv('data/DPI_Retention_Base_2021_04_14.csv')
 
 # identify contracts / arb bots
 temp <- dat %>% 
   group_by(address, date(ymd_hms(evt_block_minute))) %>% 
-  summarize(n_amount = sum(amount), n_tx = n())
+  summarize(n_amount = sum(amount), 
+            n_movements = n(), 
+            n_tx_hash = n_distinct(evt_tx_hash))
   
 contract_addresses <- temp %>%
-  filter(n_tx >= 2, n_amount <= 1e-14) %>%
+  filter(n_movements >= 2, n_amount <= 1e-14) %>%
   distinct(address) %>%
   pull(address)
 
@@ -37,20 +39,22 @@ temp <- dat %>%
             amount, 
             running_exposure = cumsum(amount), 
             type, 
-            evt_tx_hash,
-            exposure_group = case_when(
-              max(amount) >= 250 ~ "250+",
-              max(amount) >= 50 ~ "50-249",
-              max(amount) >= 10 ~ "10-49",
-              TRUE ~ "<10"
-              ),
-            cohort = as.yearmon(dt, "%m/%Y")
+            evt_tx_hash
             )
 
 # determine groups and "signup" cohorts
 groups <- temp %>% 
   group_by(address) %>% 
-  summarize(cohort = min(cohort), group = min(exposure_group))
+  summarize(
+    cohort = as.yearmon(min(dt), "%m/%Y"), 
+    group = case_when(
+      max(running_exposure) >= 250 ~ "250+",
+      max(running_exposure) >= 50 ~ "50-249",
+      max(running_exposure) >= 10 ~ "10-49",
+      TRUE ~ "<10"),
+    mr = max(running_exposure),
+    md = min(dt)
+  )
 
 cohorts_raw <- d %>% 
   arrange(desc(dt)) %>% 
@@ -59,7 +63,7 @@ cohorts_raw <- d %>%
 
 cohort_levels <- unique(cohorts_raw)
 current_cohort <- as.yearmon(today(), "%m/%Y")
-completed_cohorts <- cohorts_levels[which(cohorts_levels != current_cohort)]
+completed_cohorts <- cohort_levels[which(cohort_levels != current_cohort)]
 
 # calculate exposure days for each address
 cntr <- 1
@@ -86,7 +90,7 @@ for(t_address in unique(temp$address)) {
 }
 
 # save to temp .rds so no need to re-run that again
-saveRDS(final, "final.rds")
+saveRDS(final, "final2.rds")
 
 # join back to temp to get the amount for each day of exposure
 fini <- final %>%

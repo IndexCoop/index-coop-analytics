@@ -34,7 +34,14 @@ dpi_balancer_add AS (
     evt_tx_hash
   FROM erc20."ERC20_evt_Transfer" tr
   WHERE contract_address = '\x1494ca1f11d487c2bbe4543e90080aeba4ba3c2b'
-    AND tr."to" = '\x0bcaea3571448877ff875bc3825ccf54e5d04df0'
+    AND evt_tx_hash IN (
+    
+        SELECT
+            evt_tx_hash
+        FROM balancer."BPool_evt_LOG_JOIN"
+        WHERE "tokenIn" = '\x1494ca1f11d487c2bbe4543e90080aeba4ba3c2b'
+        
+    )
 
 ),
 
@@ -48,7 +55,14 @@ dpi_balancer_remove AS (
     evt_tx_hash
   FROM erc20."ERC20_evt_Transfer" tr
   WHERE contract_address = '\x1494ca1f11d487c2bbe4543e90080aeba4ba3c2b'
-    AND tr."from" = '\x0bcaea3571448877ff875bc3825ccf54e5d04df0'
+    AND evt_tx_hash IN (
+    
+        SELECT
+            evt_tx_hash
+        FROM balancer."BPool_evt_LOG_EXIT"
+        WHERE "tokenOut" = '\x1494ca1f11d487c2bbe4543e90080aeba4ba3c2b'
+        
+    )
     
 ),
 
@@ -474,7 +488,14 @@ fli_balancer_add AS (
     evt_tx_hash
   FROM erc20."ERC20_evt_Transfer" tr
   WHERE contract_address = '\xaa6e8127831c9de45ae56bb1b0d4d4da6e5665bd'
-    AND tr."to" = '\x83941a2d3cD426546eF4672376F6364fe69EeabD'
+    AND evt_tx_hash IN (
+    
+        SELECT
+            evt_tx_hash
+        FROM balancer."BPool_evt_LOG_JOIN"
+        WHERE "tokenIn" = '\xaa6e8127831c9de45ae56bb1b0d4d4da6e5665bd'
+        
+    )
 
 ),
 
@@ -488,8 +509,15 @@ fli_balancer_remove AS (
     evt_tx_hash
   FROM erc20."ERC20_evt_Transfer" tr
   WHERE contract_address = '\xaa6e8127831c9de45ae56bb1b0d4d4da6e5665bd'
-    AND tr."from" = '\x83941a2d3cD426546eF4672376F6364fe69EeabD'
-
+    AND evt_tx_hash IN (
+    
+        SELECT
+            evt_tx_hash
+        FROM balancer."BPool_evt_LOG_EXIT"
+        WHERE "tokenOut" = '\xaa6e8127831c9de45ae56bb1b0d4d4da6e5665bd'
+        
+    )
+    
 ),
 
 fli_uniswap_add AS (
