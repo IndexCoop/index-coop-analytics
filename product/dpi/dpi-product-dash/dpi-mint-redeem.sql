@@ -125,18 +125,25 @@ dpi_daily_price_feed AS (
     WHERE dt > '2020-09-10'
     ORDER BY 1
 
+),
+
+dpi_days AS (
+    
+    SELECT generate_series('2020-09-10'::timestamp, date_trunc('day', NOW()), '1 day') AS day -- Generate all days since the first contract
+    
 )
 
 SELECT
-    m.day,
-    m.quantity AS mint_volume,
-    r.quantity AS redeem_volume,
-    m.quantity + r.quantity AS net_volume,
-    m.quantity * p.price AS mint_in_dollars,
-    r.quantity * p.price AS redeem_in_dollars,
-    (m.quantity + r.quantity) * p.price AS net_volume_in_dollars,
-    AVG(m.quantity + r.quantity) OVER (ORDER BY m.day ROWS BETWEEN 7 PRECEDING AND CURRENT ROW) AS av,
-    AVG((m.quantity + r.quantity) * p.price) OVER (ORDER BY m.day ROWS BETWEEN 7 PRECEDING AND CURRENT ROW) AS av_in_dollars
-FROM mint_volume m
-JOIN redeem_volume r ON m.day = r.day
-JOIN dpi_daily_price_feed p ON m.day = p.dt
+    d.day,
+    COALESCE(m.quantity, 0) AS mint_volume,
+    COALESCE(r.quantity, 0) AS redeem_volume,
+    COALESCE(m.quantity, 0) + COALESCE(r.quantity, 0) AS net_volume,
+    COALESCE(m.quantity, 0) * p.price AS mint_in_dollars,
+    COALESCE(r.quantity, 0) * p.price AS redeem_in_dollars,
+    (COALESCE(m.quantity, 0) + COALESCE(r.quantity, 0)) * p.price AS net_volume_in_dollars,
+    AVG(COALESCE(m.quantity, 0) + COALESCE(r.quantity, 0)) OVER (ORDER BY m.day ROWS BETWEEN 7 PRECEDING AND CURRENT ROW) AS av,
+    AVG((COALESCE(m.quantity, 0) + COALESCE(r.quantity, 0)) * p.price) OVER (ORDER BY m.day ROWS BETWEEN 7 PRECEDING AND CURRENT ROW) AS av_in_dollars
+FROM dpi_days d
+LEFT JOIN mint_volume m ON d.day = m.day
+LEFT JOIN redeem_volume r ON d.day = r.day
+LEFT JOIN dpi_daily_price_feed p ON d.day = p.dt
