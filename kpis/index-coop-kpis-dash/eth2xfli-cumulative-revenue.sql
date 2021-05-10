@@ -141,18 +141,31 @@ fli_mint_burn_fee AS (
 
 ),
 
-fli_revenue AS (
+fli_revenue_temp AS (
 
     SELECT
         DISTINCT
         a.*,
         -- a.aum * .0117/365 AS streaming_revenue,
         -- b.revenue AS mint_burn_revenue,
-        SUM((a.aum * .0117/365) + b.revenue) OVER (ORDER BY a.day) AS revenue
+        (a.aum * .0117/365) + b.revenue AS revenue
     FROM fli_aum a
     LEFT JOIN fli_mint_burn_fee b ON a.day = b.day
     ORDER BY 1
     
+),
+
+fli_revenue AS (
+
+    SELECT
+        day,
+        product,
+        units,
+        price,
+        aum,
+        SUM(revenue) OVER (ORDER BY day) AS revenue
+    FROM fli_revenue_temp
+
 )
 
 SELECT * FROM fli_revenue
