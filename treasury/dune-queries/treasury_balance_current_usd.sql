@@ -22,7 +22,7 @@ WITH wallets AS (
     SELECT 'INDEX' AS org
         , '\x9467cfadc9de245010df95ec6a585a506a8ad5fc'::bytea AS address
         , 'Treasury Wallet' AS wallet
-    UNION
+    /*UNION
     SELECT 'INDEX' AS org
         , '\xe2250424378b6a6dC912f5714cfd308a8D593986'::bytea AS address
         , 'Treasury Committee' AS wallet
@@ -30,6 +30,7 @@ WITH wallets AS (
     select 'INDEX' AS org
     , '\x26e316f5b3819264DF013Ccf47989Fb8C891b088'::bytea AS address
     , 'Community Treasury Year 1 Vesting' AS wallet
+    */
 )
 
 , creation_days AS (
