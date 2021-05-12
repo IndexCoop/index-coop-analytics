@@ -1,4 +1,4 @@
--- https://duneanalytics.com/queries/25370/51980
+-- https://duneanalytics.com/queries/32152/64785
 
 WITH dpi_mint AS (
 
@@ -144,7 +144,9 @@ SELECT
     'MVI' AS product
 FROM mvi_units
 
-)
+),
+
+agg AS (
 
 SELECT * FROM dpi
 
@@ -159,3 +161,13 @@ SELECT * FROM btc2x
 UNION ALL
 
 SELECT * FROM mvi
+
+)
+
+SELECT
+    day,
+    SUM(amount) AS amount,
+    AVG(SUM(amount)) OVER (ORDER BY day ROWS BETWEEN 7 PRECEDING AND CURRENT ROW) AS av
+FROM agg
+GROUP BY 1
+ORDER BY 1

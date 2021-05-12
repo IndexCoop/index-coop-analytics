@@ -1,4 +1,4 @@
--- https://duneanalytics.com/queries/25300/51969
+-- https://duneanalytics.com/queries/25300
 
 WITH dpi_mint_burn AS (
 
@@ -45,6 +45,7 @@ FROM dpi_units
 
 ),
 
+-- ETH2x-FLI
 fli_mint_burn AS (
 
     SELECT 
@@ -84,19 +85,20 @@ fli AS (
 
 SELECT 
     day,
-    'ETH2X-FLI' AS product,
+    'ETH2x-FLI' AS product,
     SUM(amount) OVER (ORDER BY day) AS fli
 FROM fli_units
 
 ),
 
-cgi_mint_burn AS (
+--BTC2x-FLI
+btc2x_mint_burn AS (
 
     SELECT 
         date_trunc('day', evt_block_time) AS day, 
         SUM("_quantity"/1e18) AS amount 
-        FROM setprotocol_v2."BasicIssuanceModule_evt_SetTokenIssued"
-        WHERE "_setToken" = '\xada0a1202462085999652dc5310a7a9e2bf3ed42'
+        FROM setprotocol_v2."DebtIssuanceModule_evt_SetTokenIssued"
+        WHERE "_setToken" = '\x0b498ff89709d3838a063f1dfa463091f9801c2b'
         GROUP BY 1
 
     UNION ALL
@@ -104,35 +106,34 @@ cgi_mint_burn AS (
     SELECT 
         date_trunc('day', evt_block_time) AS day, 
         -SUM("_quantity"/1e18) AS amount 
-    FROM setprotocol_v2."BasicIssuanceModule_evt_SetTokenRedeemed" 
-    WHERE "_setToken" = '\xada0a1202462085999652dc5310a7a9e2bf3ed42'
+    FROM setprotocol_v2."DebtIssuanceModule_evt_SetTokenRedeemed" 
+    WHERE "_setToken" = '\x0b498ff89709d3838a063f1dfa463091f9801c2b'
     GROUP BY 1
-
 ),
 
-cgi_days AS (
+btc2x_days AS (
     
-    SELECT generate_series('2021-02-10'::timestamp, date_trunc('day', NOW()), '1 day') AS day -- Generate all days since the first contract
+    SELECT generate_series('2021-05-11'::timestamp, date_trunc('day', NOW()), '1 day') AS day -- Generate all days since the first contract
     
 ),
 
-cgi_units AS (
+btc2x_units AS (
 
     SELECT
         d.day,
         COALESCE(m.amount, 0) AS amount
-    FROM cgi_days d
-    LEFT JOIN cgi_mint_burn m ON d.day = m.day
+    FROM btc2x_days d
+    LEFT JOIN btc2x_mint_burn m ON d.day = m.day
     
 ),
 
-cgi AS (
+btc2x AS (
 
-SELECT 
-    day,
-    'CGI' AS product,
-    SUM(amount) OVER (ORDER BY day) AS cgi
-FROM cgi_units
+    SELECT 
+        day, 
+        'BTC2x-FLI' AS product,
+        SUM(amount) OVER (ORDER BY day) AS btc2x
+    FROM btc2x_units
 
 ),
 
@@ -181,16 +182,16 @@ FROM mvi_units
 
 )
 
-SELECT * FROM dpi
+SELECT DISTINCT * FROM dpi
 
 UNION ALL
 
-SELECT * FROM fli
+SELECT DISTINCT * FROM fli
 
 UNION ALL
 
-SELECT * FROM cgi
+SELECT DISTINCT * FROM btc2x
 
 UNION ALL
 
-SELECT * FROM mvi
+SELECT DISTINCT * FROM mvi
