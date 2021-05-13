@@ -44,8 +44,8 @@ WITH prices_usd AS (
 , uni_a1_prcs AS (
 
     SELECT 
-        avg(price) a1_prc, 
-        date_trunc('hour', minute) AS hour
+        avg(price) a1_prc
+        , date_trunc('hour', minute) AS hour
     FROM prices.usd
     WHERE minute >= '2020-09-10'
         AND contract_address ='\xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2' --weth as base asset
@@ -61,10 +61,10 @@ WITH prices_usd AS (
 , uni_temp AS (
 
     SELECT
-        h.hour,
-        s.symbol,
-        COALESCE(AVG((s.a1_amt/s.a0_amt)*a.a1_prc), NULL) AS usd_price, 
-        COALESCE(AVG(s.a1_amt/s.a0_amt), NULL) as eth_price
+        h.hour
+        , s.symbol
+        , COALESCE(AVG((s.a1_amt/s.a0_amt)*a.a1_prc), NULL) AS usd_price
+        , COALESCE(AVG(s.a1_amt/s.a0_amt), NULL) as eth_price
         -- a1_prcs."minute" AS minute
     FROM uni_hours h
     LEFT JOIN uni_swaps s ON h."hour" = s.hour 
@@ -74,18 +74,18 @@ WITH prices_usd AS (
 ) 
 , uni_feed AS (
     SELECT
-        hour,
-        symbol,
-        (ARRAY_REMOVE(ARRAY_AGG(usd_price) OVER (ORDER BY hour), NULL))[COUNT(usd_price) OVER (ORDER BY hour)] AS usd_price,
-        (ARRAY_REMOVE(ARRAY_AGG(eth_price) OVER (ORDER BY hour), NULL))[COUNT(eth_price) OVER (ORDER BY hour)] AS eth_price
+        hour
+        , symbol
+        , (ARRAY_REMOVE(ARRAY_AGG(usd_price) OVER (ORDER BY hour), NULL))[COUNT(usd_price) OVER (ORDER BY hour)] AS usd_price
+        , (ARRAY_REMOVE(ARRAY_AGG(eth_price) OVER (ORDER BY hour), NULL))[COUNT(eth_price) OVER (ORDER BY hour)] AS eth_price
     FROM uni_temp
 )
 , uni_price_feed AS ( -- only include the uni feed when there's no corresponding price in prices_usd
 
     SELECT
-        date_trunc('day', hour) AS dt,
-        u.symbol,
-        AVG(usd_price) AS price
+        date_trunc('day', hour) AS dt
+        , u.symbol
+        , AVG(usd_price) AS price
     FROM uni_feed u
     left join prices_usd p on date_trunc('day', u.hour) = p.dt
         and u.symbol = p.symbol
