@@ -44,10 +44,10 @@ WITH prices_usd AS (
     
     -- Sushi price feed
     SELECT
-        date_trunc('hour', sw."evt_block_time") AS hour,
-        , 'BTC2x-FLI'
-        ("amount0In" + "amount0Out")/1e18 AS a0_amt, 
-        ("amount1In" + "amount1Out")/1e8 AS a1_amt
+        date_trunc('hour', sw."evt_block_time") AS hour
+        , 'BTC2x-FLI' as symbol
+        , ("amount0In" + "amount0Out")/1e18 AS a0_amt
+        , ("amount1In" + "amount1Out")/1e8 AS a1_amt
     FROM sushi."Pair_evt_Swap" sw
     WHERE contract_address = '\x164fe0239d703379bddde3c80e4d4800a1cd452b' -- liq pair address I am searching the price for
         AND sw.evt_block_time >= '2021-05-11'
