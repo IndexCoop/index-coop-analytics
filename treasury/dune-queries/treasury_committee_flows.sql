@@ -179,11 +179,12 @@ WITH prices_usd AS (
 SELECT
     w.week
 --        t.address,
-    , t.symbol
-    , coalesce(t.inflow_usd,0) as inflow_usd
-    , coalesce(t.outflow_usd, 0) as outflow_usd
+    -- , t.symbol
+    , sum(coalesce(t.inflow_usd,0)) as inflow_usd
+    , sum(coalesce(t.outflow_usd, 0)) as outflow_usd
     , sum(coalesce(t.inflow_usd,0) - coalesce(t.outflow_usd, 0)) over 
         (order by w.week asc rows between unbounded preceding and current row) as balance
 FROM weeks w
 left join transfers_week t ON w.week = t.week
+group by 1
 
