@@ -1,6 +1,6 @@
 /*  dune query here: https://duneanalytics.com/queries/46532
     This query is to create a generalized price feed for INDEX products by merging
-    Uniswap V2 swaps in and inferring the USD price from the wETH price when prices.usd is unavailable.
+    swap prices in and inferring the USD price from the wETH or wBTC price when prices.usd is unavailable.
     It's designed to be used as part of the CTE pipeline for other queries.
     The tokens covered right now:
         - 'INDEX', uni_v2 contract address = '\x3452A7f30A712e415a0674C0341d44eE9D9786F9'
