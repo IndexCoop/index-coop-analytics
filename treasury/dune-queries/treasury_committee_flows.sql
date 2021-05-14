@@ -182,7 +182,7 @@ SELECT
     -- , t.symbol
     , sum(coalesce(t.inflow_usd,0)) as inflow_usd
     , sum(coalesce(t.outflow_usd, 0)) as outflow_usd
-    , sum(coalesce(t.inflow_usd,0) - coalesce(t.outflow_usd, 0)) over 
+    , sum(sum(coalesce(t.inflow_usd,0)) - sum(coalesce(t.outflow_usd, 0))) over 
         (order by w.week asc rows between unbounded preceding and current row) as balance
 FROM weeks w
 left join transfers_week t ON w.week = t.week
