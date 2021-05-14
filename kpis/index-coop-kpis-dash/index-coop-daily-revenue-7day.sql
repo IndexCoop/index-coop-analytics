@@ -1,4 +1,4 @@
--- https://duneanalytics.com/queries/26511/53808
+-- https://duneanalytics.com/queries/32156/64793
 
 WITH dpi_mint_burn AS (
 
@@ -568,13 +568,15 @@ SELECT
 FROM mvi_aum
 WHERE price IS NOT NULL
 
-)
+),
 
-SELECT DISTINCT  * FROM dpi_revenue
+agg AS (
+
+SELECT * FROM dpi_revenue
 
 UNION ALL
 
-SELECT DISTINCT * FROM fli_revenue
+SELECT * FROM fli_revenue
 
 UNION ALL
 
@@ -582,4 +584,14 @@ SELECT * FROM btc2x_revenue
 
 UNION ALL 
 
-SELECT DISTINCT * FROM mvi_revenue
+SELECT * FROM mvi_revenue
+
+)
+
+SELECT
+    day,
+    SUM(revenue) AS revenue,
+    AVG(SUM(revenue)) OVER (ORDER BY day ROWS BETWEEN 7 PRECEDING AND CURRENT ROW) AS av
+FROM agg
+GROUP BY 1
+ORDER BY 1

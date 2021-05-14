@@ -1,4 +1,4 @@
--- https://duneanalytics.com/queries/25282
+-- https://duneanalytics.com/queries/41628
 
 WITH dpi_transfers AS (
 
@@ -757,7 +757,7 @@ fli AS (
 
     SELECT
         evt_block_day,
-        'ETH2x-FLI' AS product,
+        'ETH2X-FLI' AS product,
         COUNT(DISTINCT(address))
     FROM fli_address_over_time
     WHERE exposure > 0
@@ -1303,7 +1303,9 @@ FROM mvi_address_over_time
 WHERE exposure > 0
 GROUP BY 1
 
-)
+),
+
+holders AS (
 
 SELECT * FROM dpi
 
@@ -1318,3 +1320,12 @@ SELECT * FROM btc2x
 UNION ALL
 
 SELECT * FROM mvi
+
+)
+
+SELECT
+    evt_block_day,
+    SUM(count) AS holders
+FROM holders
+GROUP BY 1
+ORDER BY 1

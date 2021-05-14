@@ -1,4 +1,4 @@
--- https://duneanalytics.com/queries/25282
+-- https://duneanalytics.com/queries/36698
 
 WITH dpi_transfers AS (
 
@@ -442,15 +442,15 @@ dpi_address_over_time AS (
 
 ),
 
-dpi AS (
+dpi_addresses AS (
 
-    SELECT
-        evt_block_day,
-        'DPI' AS product,
-        COUNT(DISTINCT(address))
-    FROM dpi_address_over_time
-    WHERE exposure > 0
-    GROUP BY 1
+SELECT
+    DISTINCT
+    'DPI' AS product,
+    evt_block_day,
+    address
+FROM dpi_address_over_time
+WHERE exposure > 0
     
 ),
 
@@ -753,15 +753,15 @@ fli_address_over_time AS (
 
 ),
 
-fli AS (
+fli_addresses AS (
 
     SELECT
-        evt_block_day,
+        DISTINCT
         'ETH2x-FLI' AS product,
-        COUNT(DISTINCT(address))
+        evt_block_day,
+        address
     FROM fli_address_over_time
     WHERE exposure > 0
-    GROUP BY 1
 
 ),
 
@@ -1032,16 +1032,15 @@ btc2x_address_over_time AS (
 
 ),
 
-btc2x AS (
+btc2x_addresses AS (
 
     SELECT
-        evt_block_day,
+        DISTINCT
         'BTC2x-FLI' AS product,
-        COUNT(DISTINCT(address))
+        evt_block_day,
+        address
     FROM btc2x_address_over_time
     WHERE exposure > 0
-        AND evt_block_day >= '2021-05-11'
-    GROUP BY 1
 
 ),
 
@@ -1293,28 +1292,49 @@ mvi_address_over_time AS (
 
 ),
 
-mvi AS (
+mvi_addresses AS (
 
 SELECT
-    evt_block_day,
+    DISTINCT
     'MVI' AS product,
-    COUNT(DISTINCT(address))
+    evt_block_day,
+    address
 FROM mvi_address_over_time
 WHERE exposure > 0
-GROUP BY 1
+
+),
+
+products AS (
+
+SELECT * FROM dpi_addresses
+
+UNION ALL
+
+SELECT * FROM fli_addresses
+
+UNION ALL
+
+SELECT * FROM mvi_addresses
+
+UNION ALL
+
+SELECT * FROM btc2x_addresses
 
 )
 
-SELECT * FROM dpi
+SELECT
+    products,
+    evt_block_day,
+    COUNT(*) AS addresses
+    
+FROM (
 
-UNION ALL
+SELECT
+    evt_block_day,
+    address,
+    COUNT(*) AS products
+FROM products
+GROUP BY 1, 2
 
-SELECT * FROM fli
-
-UNION ALL
-
-SELECT * FROM btc2x
-
-UNION ALL
-
-SELECT * FROM mvi
+) a
+GROUP BY 1, 2
