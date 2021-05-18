@@ -7,6 +7,7 @@ Prereqs:
     - Download chromedriver version matching your chrome browser: https://chromedriver.chromium.org/downloads
 """
 
+
 vote_urls = {
     'BTC2X-FLI': 'https://snapshot.org/#/index/proposal/Qmc2DPHoKnyYxRjQfwbpbBngt5xHZrLBgkywGqZm7hHnEU',
     'SMI': 'https://snapshot.org/#/index/proposal/QmYBG5zerdSkC9TGwguy5biCS5h2cg49PQCHCukJqHmfE1',
@@ -26,6 +27,6 @@ def scrape_vote_csv_reports(vote_url:str):
     download_snapshot_vote_report_button = driver.find_element_by_xpath('//button[.="Download report"]')
     download_snapshot_vote_report_button.click()
 
-for vote_url in vote_urls:
+for vote_url in vote_urls.values():
     print(f'Fetching {vote_url}')
     scrape_vote_csv_reports(vote_url)
