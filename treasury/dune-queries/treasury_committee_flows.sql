@@ -169,12 +169,25 @@ WITH prices_usd AS (
         date_trunc('week', tr.day) as week
         , tr.address
         , tok.symbol
+        , avg(p.price) as avg_price
+        , sum(tr.inflow/10^(tok.decimals)) as inflow_token
+        , sum(tr.outflow/10^(tok.decimals)) AS outflow_token
         , sum(tr.inflow/10^(tok.decimals) * coalesce(p.price,0)) AS inflow_usd
         , sum(tr.outflow/10^(tok.decimals)* coalesce(p.price,0)) AS outflow_usd
+        
+
+        
     FROM transfers tr
     inner join erc20.tokens tok on tr.contract_address = tok.contract_address
     left join prices p on tok.symbol = p.symbol and p.dt = tr.day
     GROUP BY 1,2,3
+)
+, transfers_week_balances as (
+    select t.*
+        , avg_price * sum(inflow_token + outflow_token) over 
+            (partition by symbol order by week asc rows between unbounded preceding and current row) as balance_usd
+    from transfers_week t
+    
 )
 SELECT
     w.week
@@ -182,9 +195,9 @@ SELECT
     -- , t.symbol
     , sum(coalesce(t.inflow_usd,0)) as inflow_usd
     , sum(coalesce(t.outflow_usd, 0)) as outflow_usd
-    , sum(sum(coalesce(t.inflow_usd,0)) + sum(coalesce(t.outflow_usd, 0))) over 
-        (order by w.week asc rows between unbounded preceding and current row) as balance
+    , sum(t.balance_usd) as balance_usd
+
 FROM weeks w
-left join transfers_week t ON w.week = t.week
+left join transfers_week_balances t ON w.week = t.week
 group by 1
 
