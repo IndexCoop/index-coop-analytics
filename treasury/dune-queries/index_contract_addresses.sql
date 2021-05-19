@@ -84,16 +84,25 @@
         , 'Set Labs Year 3 Vesting' as address_alias
     union all
     select '\x319b852cd28b1cbeb029a3017e787b98e62fd4e2'::bytea as address
-        , 'Rewards Merkle Distributor / January Merkle Rewards Account' as address_alias
+        , 'Rewards Merkle Distributor / January 2021 Merkle Rewards Account' as address_alias
     union all
     select '\xeb1cbc809b21dddc71f0f9edc234eee6fb29acee'::bytea as address
-        , 'December Merkle Rewards Account' as address_alias
+        , 'December 2020 Merkle Rewards Account' as address_alias
     union all
     select '\x209f012602669c88bbda687fbbfe6a0d67477a5d'::bytea as address
-        , 	'October Merkle Rewards Account' as address_alias
+        , 	'October 2020 Merkle Rewards Account' as address_alias
     union all
     select '\xa6bb7b6b2c5c3477f20686b98ea09796f8f93184'::bytea as address
-        ,	'November Merkle Rewards Account' as address_alias
+        ,	'November 2020 Merkle Rewards Account' as address_alias
+    union all
+    select '\xCa3C3570beb35E5d3D85BCd8ad8F88BefaccFF10'::bytea as address
+        , 'February 2021 Merkle Rewards Account' as address_alias
+    union all
+    select '\xa87fbb413f8de11e47037c5d697cc03de29e4e4b'::bytea as address
+        , 'March 2021 Merkle Rewards Account' as address_alias
+    union all
+    select '\x973a526a633313b2d32b9a96ed16e212303d6905'::bytea as address
+        ,	'April 2021 Merkle Rewards Account' as address_alias
 
 
 
