@@ -17,6 +17,7 @@
 */
 
 -- Start Generalized Price Feed block - see generalized_price_feed.sql
+
 WITH prices_usd AS (
 
     SELECT
@@ -28,7 +29,7 @@ WITH prices_usd AS (
     GROUP BY 1,2
 )
     
-, swaps AS (
+, eth_swaps AS (
     -- Uniswap price feed
     SELECT
         date_trunc('hour', sw."evt_block_time") AS hour
@@ -46,9 +47,8 @@ WITH prices_usd AS (
                                 , '\x4d3C5dB2C68f6859e0Cd05D080979f597DD64bff' 
                                 , '\xf91c12dae1313d0be5d7a27aa559b1171cc1eac5' )
         AND sw.evt_block_time >= '2020-09-10'
-
-    union all
-    
+)
+, btc_swaps as (   
     -- Sushi price feed
     SELECT
         date_trunc('hour', sw."evt_block_time") AS hour
@@ -60,37 +60,72 @@ WITH prices_usd AS (
         AND sw.evt_block_time >= '2021-05-11'
 
 )
-, swap_a1_prcs AS (
+
+, swap_a1_eth_prcs AS (
+
     SELECT 
         avg(price) a1_prc
         , date_trunc('hour', minute) AS hour
     FROM prices.usd
     WHERE minute >= '2020-09-10'
         AND contract_address ='\xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2' --weth as base asset
-    GROUP BY 2               
+    GROUP BY 2                
 )
-, uni_hours AS (
+
+, swap_a1_btc_prcs as (
+
+    SELECT 
+        avg(price) a1_prc, 
+        date_trunc('hour', minute) AS hour
+    FROM prices.usd
+    WHERE minute >= '2021-05-11'
+        AND contract_address ='\x2260fac5e5542a773aa44fbcfedf7c193bc2c599' --wbtc as base asset
+    GROUP BY 2
+)
+
+, swap_hours AS (
+    
     SELECT generate_series('2020-09-10 00:00:00'::timestamp, date_trunc('hour', NOW()), '1 hour') AS hour -- Generate all days since the first contract
+    
 )
-, uni_temp AS (
+, eth_temp AS (
+
     SELECT
         h.hour
         , s.symbol
         , COALESCE(AVG((s.a1_amt/s.a0_amt)*a.a1_prc), NULL) AS usd_price
-        , COALESCE(AVG(s.a1_amt/s.a0_amt), NULL) as eth_price
+        -- , COALESCE(AVG(s.a1_amt/s.a0_amt), NULL) as asset_price
         -- a1_prcs."minute" AS minute
-    FROM uni_hours h
-    LEFT JOIN swaps s ON h."hour" = s.hour 
-    LEFT JOIN swap_a1_prcs a ON h."hour" = a."hour"
+    FROM swap_hours h
+    LEFT JOIN eth_swaps s ON h."hour" = s.hour 
+    LEFT JOIN swap_a1_eth_prcs a ON h."hour" = a."hour"
     GROUP BY 1,2
+
 ) 
+, btc_temp as (
+    SELECT
+        h.hour
+        , s.symbol
+        , COALESCE(AVG((s.a1_amt/s.a0_amt)*a.a1_prc), NULL) AS usd_price
+        -- , COALESCE(AVG(s.a1_amt/s.a0_amt), NULL) as asset_price
+        -- a1_prcs."minute" AS minute
+    FROM swap_hours h
+    LEFT JOIN btc_swaps s ON h."hour" = s.hour 
+    LEFT JOIN swap_a1_btc_prcs a ON h."hour" = a."hour"
+    GROUP BY 1,2
+)
+, swap_temp as (
+    select * from eth_temp
+    union
+    select * from btc_temp
+)
 , swap_feed AS (
     SELECT
         hour
         , symbol
         , (ARRAY_REMOVE(ARRAY_AGG(usd_price) OVER (PARTITION BY symbol ORDER BY hour), NULL))[COUNT(usd_price) OVER (PARTITION BY symbol ORDER BY hour)] AS usd_price
-        , (ARRAY_REMOVE(ARRAY_AGG(eth_price) OVER (PARTITION BY symbol ORDER BY hour), NULL))[COUNT(eth_price) OVER (PARTITION BY symbol ORDER BY hour)] AS eth_price
-    FROM uni_temp
+        -- , (ARRAY_REMOVE(ARRAY_AGG(asset_price) OVER (PARTITION BY symbol ORDER BY hour), NULL))[COUNT(asset_price) OVER (PARTITION BY symbol ORDER BY hour)] AS asset_price
+    FROM swap_temp
 )
 , swap_price_feed AS ( -- only include the uni feed when there's no corresponding price in prices_usd
 
@@ -105,16 +140,27 @@ WITH prices_usd AS (
         AND usd_price IS NOT NULL
     GROUP BY 1, 2
 
+),
+
+prices AS (
+
+SELECT
+    *
+FROM prices_usd
+
+UNION ALL
+
+SELECT
+    *
+FROM swap_price_feed
+
 )
-, prices AS (
-    SELECT *
-    FROM prices_usd
-    where dt > '2020-10-06'
-    UNION ALL
-    SELECT *
-    FROM swap_price_feed
-    where dt > '2020-10-06'
-)
+
+SELECT
+    *
+FROM index_price
+WHERE dt > '2020-10-06'
+ORDER BY 1
 -- End price feed block - output is CTE "prices"
 , wallets AS (
     SELECT 'INDEX' AS org
