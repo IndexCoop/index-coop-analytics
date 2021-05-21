@@ -103,6 +103,9 @@
     union all
     select '\x973a526a633313b2d32b9a96ed16e212303d6905'::bytea as address
         ,	'April 2021 Merkle Rewards Account' as address_alias
+    union all
+    select '\x10F87409E405c5e44e581A4C3F2eECF36AAf1f92'::bytea as address
+        , 'INDEX Sale 2 of 3 Multisig - Dylan, Greg, Punia' as address_alias
 
 
 
