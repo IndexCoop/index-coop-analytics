@@ -1,5 +1,5 @@
 /*
-    query here: https://duneanalytics.com/queries/54052
+    query here: https://duneanalytics.com/queries/54058
 
     --- INDEX Treasury ---
 
