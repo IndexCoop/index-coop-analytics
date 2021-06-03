@@ -84,7 +84,7 @@
         , 'Set Labs Year 3 Vesting' as address_alias
     union all
     select '\x319b852cd28b1cbeb029a3017e787b98e62fd4e2'::bytea as address
-        , 'Rewards Merkle Distributor / January 2021 Merkle Rewards Account' as address_alias
+        , 'January 2021 Merkle Rewards Account' as address_alias
     union all
     select '\xeb1cbc809b21dddc71f0f9edc234eee6fb29acee'::bytea as address
         , 'December 2020 Merkle Rewards Account' as address_alias
@@ -106,6 +106,7 @@
     union all
     select '\x10F87409E405c5e44e581A4C3F2eECF36AAf1f92'::bytea as address
         , 'INDEX Sale 2 of 3 Multisig - Dylan, Greg, Punia' as address_alias
+    
 
 
 

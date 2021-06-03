@@ -154,6 +154,7 @@ FROM swap_price_feed
 )
 -- End price feed block - output is CTE "prices"
 , wallets AS (
+    
     select '\x154c154c589b4aeccbf186fb8bc668cd7c213762'::bytea as address
         , 'Centralised Exchange Listing' as address_alias
     union all
@@ -236,7 +237,7 @@ FROM swap_price_feed
         , 'Set Labs Year 3 Vesting' as address_alias
     union all
     select '\x319b852cd28b1cbeb029a3017e787b98e62fd4e2'::bytea as address
-        , 'Rewards Merkle Distributor / January 2021 Merkle Rewards Account' as address_alias
+        , 'January 2021 Merkle Rewards Account' as address_alias
     union all
     select '\xeb1cbc809b21dddc71f0f9edc234eee6fb29acee'::bytea as address
         , 'December 2020 Merkle Rewards Account' as address_alias

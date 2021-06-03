@@ -250,7 +250,7 @@ FROM swap_price_feed
         , 'Set Labs Year 3 Vesting' as address_alias
     union all
     select '\x319b852cd28b1cbeb029a3017e787b98e62fd4e2'::bytea as address
-        , 'Rewards Merkle Distributor / January 2021 Merkle Rewards Account' as address_alias
+        , 'January 2021 Merkle Rewards Account' as address_alias
     union all
     select '\xeb1cbc809b21dddc71f0f9edc234eee6fb29acee'::bytea as address
         , 'December 2020 Merkle Rewards Account' as address_alias
@@ -314,6 +314,33 @@ FROM swap_price_feed
     left join addresses a on tr.recipient_address = a.address
     GROUP BY 1,2,3,4
 )
-select *
+select month
+    , recipient_address as "Recipient Address"
+    , amount_usd as "USD Value"
+    , amount_token as "Qty Token"
+    , symbol as "token"
+    , avg_price as "INDEX Price"
+    , case when recipient_address in 
+            (
+                '\x24f2e2bee40a5b98b986cca60b58a4f2e1c2e9a8'
+                , '\x3bb8a82c196b93cd4bad4e0128b9de09baedf0ac'
+                , '\x3c8c168c2c039cab29493708f09105b43f7baea2'
+                , '\x466f1f536540e527500f85c592f20b63e59709ce'
+                , '\x473ac44a488ffc3f8237f45e469f60b416690f3d'
+                , '\x59237e1c8423e18b2616f14cb4af94f999a8952e'
+                , '\x82fca92920c6fbd78ae1a9532cfa7d0b64f84c6b'
+                , '\x83db5c6dfd2f8899bf634953472799e0097c9d5d'
+                , '\x9d5287bb925091eced73bf1e7f57617f92cc8cd0'
+                , '\xa451f32cd5668a8b75404536f403392a7261f339'
+                , '\xab81c895201f0f307e00be1926a7f8c601d11c4c'
+                , '\xb246ee73d98e9cdca42cbfa2b44b350cd6041e31'
+                , '\xbcbb82e5e57d74169a61617849e4ad4b27078367'
+                , '\xce4cdc815b7093d396f628e9b4c0cb197493dd9c'
+                , '\xe25c3fc737089ea15d10e8159df8a8e7923413a0'
+                , '\xe29e5266d9e6f6758d4ee156ffb618404ce430bd'
+            )
+        then 'Contributor Rewards'
+        else recipient_address_alias 
+        end as recipient_address_alias
 from transfers_month
 order by 1 desc

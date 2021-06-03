@@ -123,6 +123,7 @@ WITH prices_usd AS (
     
 )
 , addresses as (
+    
     select '\x154c154c589b4aeccbf186fb8bc668cd7c213762'::bytea as address
         , 'Centralised Exchange Listing' as address_alias
     union all
@@ -205,7 +206,7 @@ WITH prices_usd AS (
         , 'Set Labs Year 3 Vesting' as address_alias
     union all
     select '\x319b852cd28b1cbeb029a3017e787b98e62fd4e2'::bytea as address
-        , 'Rewards Merkle Distributor / January 2021 Merkle Rewards Account' as address_alias
+        , 'January 2021 Merkle Rewards Account' as address_alias
     union all
     select '\xeb1cbc809b21dddc71f0f9edc234eee6fb29acee'::bytea as address
         , 'December 2020 Merkle Rewards Account' as address_alias
@@ -224,6 +225,9 @@ WITH prices_usd AS (
     union all
     select '\x973a526a633313b2d32b9a96ed16e212303d6905'::bytea as address
         ,	'April 2021 Merkle Rewards Account' as address_alias
+    union all
+    select '\x10F87409E405c5e44e581A4C3F2eECF36AAf1f92'::bytea as address
+        , 'INDEX Sale 2 of 3 Multisig - Dylan, Greg, Punia' as address_alias
     
 )
 
@@ -270,6 +274,12 @@ WITH prices_usd AS (
     left join addresses a on tr.recipient_address = a.address
     GROUP BY 1,2,3,4
 )
-select *
+select month
+    , recipient_address as "Recipient Address"
+    , amount_usd as "USD Value"
+    , amount_token as "Qty Token"
+    , symbol as "token"
+    , avg_price as "INDEX Price"
+    , recipient_address_alias
 from transfers_month
 order by 1 desc
