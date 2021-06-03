@@ -298,14 +298,21 @@ FROM swap_price_feed
     GROUP BY 1,2,3
 )
 
+, decimals as (
+    select distinct contract_address
+    , decimals
+    from prices.usd
+    WHERE symbol in ('INDEX', 'DPI', 'MVI', 'ETH2x-FLI', 'BTC2x-FLI', 'USDC')
+)
+
 , transfers_day AS (
     SELECT
         t.day,
         t.address,
         t.contract_address,
-        sum(t.amount/10^18) AS change -- all target contracts have decimals of 18
+        sum(t.amount/10^coalesce(d.decimals,18)) AS change 
     FROM transfers t
-    GROUP BY 1,2,3
+    left join decimals d on t.contract_address = d.contract_address
 )
 
 , balances_w_gap_days AS (
@@ -316,6 +323,7 @@ FROM swap_price_feed
         sum(change) OVER (PARTITION BY address, contract_address ORDER BY day) AS "balance",
         lead(day, 1, now()) OVER (PARTITION BY address, contract_address ORDER BY day) AS next_day
     FROM transfers_day
+    GROUP BY 1,2,3
 )
 
 , balances_all_days AS (

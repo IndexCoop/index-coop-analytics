@@ -15,10 +15,11 @@ WITH prices_usd AS (
     SELECT
         date_trunc('day', minute) AS dt
         , symbol
+        , decimals
         , AVG(price) AS price
     FROM prices.usd
-    WHERE symbol in ('INDEX', 'DPI', 'MVI', 'ETH2x-FLI', 'BTC2x-FLI')
-    GROUP BY 1,2
+    WHERE symbol in ('INDEX', 'DPI', 'MVI', 'ETH2x-FLI', 'BTC2x-FLI', 'USDC')
+    GROUP BY 1,2,3
 )
     
 , eth_swaps AS (
@@ -142,8 +143,10 @@ FROM prices_usd
 
 UNION ALL
 
-SELECT
-    *
+SELECT dt  
+    , u.symbol
+    , 18 as decimals -- all the INDEX tokens have 18 decimals
+    , price
 FROM swap_price_feed
 
 )

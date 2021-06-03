@@ -16,15 +16,17 @@
 
 -- Start Generalized Price Feed block - see generalized_price_feed.sql
 
+
 WITH prices_usd AS (
 
     SELECT
         date_trunc('day', minute) AS dt
         , symbol
+        , decimals
         , AVG(price) AS price
     FROM prices.usd
-    WHERE symbol in ('INDEX', 'DPI', 'MVI', 'ETH2x-FLI', 'BTC2x-FLI')
-    GROUP BY 1,2
+    WHERE symbol in ('INDEX', 'DPI', 'MVI', 'ETH2x-FLI', 'BTC2x-FLI', 'USDC')
+    GROUP BY 1,2,3
 )
     
 , eth_swaps AS (
@@ -148,17 +150,13 @@ FROM prices_usd
 
 UNION ALL
 
-SELECT
-    *
+SELECT dt  
+    , symbol
+    , 18 as decimals -- all the INDEX tokens have 18 decimals
+    , price
 FROM swap_price_feed
 
 )
-
-SELECT
-    *
-FROM index_price
-WHERE dt > '2020-10-06'
-ORDER BY 1
 -- End price feed block - output is CTE "prices"
 , wallets AS (
     SELECT 'INDEX' AS org
@@ -211,14 +209,21 @@ ORDER BY 1
     AND evt_block_time >= (SELECT min(day) FROM creation_days)
     GROUP BY 1,2,3
 )
+, decimals as (
+    select distinct contract_address
+    , decimals
+    from prices.usd
+    WHERE symbol in ('INDEX', 'DPI', 'MVI', 'ETH2x-FLI', 'BTC2x-FLI', 'USDC')
+)
 
 , transfers_day AS (
     SELECT
         t.day,
         t.address,
         t.contract_address,
-        sum(t.amount/10^18) AS change -- all target contracts have decimals of 18
+        sum(t.amount/10^coalesce(d.decimals,18)) AS change 
     FROM transfers t
+    left join decimals d on t.contract_address = d.contract_address
     GROUP BY 1,2,3
 )
 
