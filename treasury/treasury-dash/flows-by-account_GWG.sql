@@ -257,7 +257,7 @@ WITH prices_usd AS (
 , transfers_month AS (
     SELECT
         date_trunc('month', tr.day) as month
-        , tr.sender_address
+        -- , tr.sender_address
         , coalesce(a.address_alias, 'unknown') as recipient_address_alias
         , tr.recipient_address
         , tok.symbol
@@ -268,7 +268,7 @@ WITH prices_usd AS (
     inner join erc20.tokens tok on tr.contract_address = tok.contract_address
     left join prices p on tok.symbol = p.symbol and p.dt = tr.day
     left join addresses a on tr.recipient_address = a.address
-    GROUP BY 1,2,3,4,5
+    GROUP BY 1,2,3,4
 )
 select *
 from transfers_month

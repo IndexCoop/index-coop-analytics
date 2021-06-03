@@ -147,9 +147,10 @@ SELECT
 FROM swap_price_feed
 
 )
-
+/*
 SELECT
     *
 FROM index_price
 WHERE dt > '2020-10-06'
 ORDER BY 1
+*/

@@ -180,12 +180,19 @@ WITH prices_usd AS (
     left join prices p on tok.symbol = p.symbol and p.dt = tr.day
     GROUP BY 1,2,3
 )
-, transfers_week_balances as (
-    select t.*
+-- , transfers_week_balances as (
+    select t.week
+        -- , t.address
+        , t.symbol
+        , t.avg_price
+        , t.inflow_token
+        , t.outflow_token
+        , t.inflow_usd
+        , t.outflow_usd
         , avg_price * sum(inflow_token + outflow_token) over 
             (partition by symbol order by week asc rows between unbounded preceding and current row) as balance_usd
     from transfers_week t
-    
+/*
 )
 SELECT
     w.week
@@ -198,4 +205,6 @@ SELECT
 FROM weeks w
 left join transfers_week_balances t ON w.week = t.week
 group by 1
+
+*/
 
