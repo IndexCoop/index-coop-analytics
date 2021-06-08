@@ -78,7 +78,7 @@ f <- final %>%
   fill(-date)
 
 # write data to csv
-t %>% write_csv("mvi_token_market_caps_04_26_2021.csv")
-p %>% write_csv("mvi_token_percent_supply_04_26_2021.csv")
-f %>% write_csv("mvi_token_fully_diluted_04_26_2021.csv")
+t %>% write_csv("mvi_token_market_caps_06_01_2021.csv")
+p %>% write_csv("mvi_token_percent_supply_06_01_2021.csv")
+f %>% write_csv("mvi_token_fully_diluted_06_01_2021.csv")
 
