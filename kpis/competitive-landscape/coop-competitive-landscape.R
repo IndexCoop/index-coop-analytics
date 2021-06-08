@@ -93,14 +93,21 @@ project_mcaps <- product_mcaps %>%
   group_by(project, date) %>%
   summarize(market_cap = sum(market_cap))
 
+project_mcaps_formatted <- project_mcaps %>%
+  spread(key = project, value = market_cap) %>%
+  replace(is.na(.), 0)
+
 # quick visual of project AUM
-project_mcaps %>%
-  ggplot(aes(x = date, y = market_cap, color = project)) +
-  geom_line() +
-  scale_y_continuous(name = "Market Cap", labels = scales::comma) +
-  scale_x_date(name = "") +
-  theme_bw()
+# project_mcaps %>%
+#   ggplot(aes(x = date, y = market_cap, color = project)) +
+#   geom_line() +
+#   scale_y_continuous(name = "Market Cap", labels = scales::comma) +
+#   scale_x_date(name = "") +
+#   theme_bw()
 
 # write .csvs
-write_csv(product_mcaps, 'index-coop-competitive-landscape-product-mcaps-2021_06_07.csv')
-write_csv(project_mcaps, 'index-coop-competitive-landscape-project-mcaps-2021_06_07.csv')
+# write_csv(product_mcaps, 'index-coop-competitive-landscape-product-mcaps-2021_06_07.csv')
+# write_csv(project_mcaps, 'index-coop-competitive-landscape-project-mcaps-2021_06_07.csv')
+write_csv(project_mcaps_formatted, 'index-coop-competitive-landscape-project-mcaps-2021_06_07.csv')
+
+
