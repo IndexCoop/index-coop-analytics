@@ -1,4 +1,4 @@
--- https://duneanalytics.com/queries/27981/56548
+-- https://duneanalytics.com/queries/56930
 
 -- ETH2x-FLI Supply Breakdown
 WITH fli_uniswap_pairs AS (
@@ -65,6 +65,10 @@ fli_liquidity_supply AS (
 
 fli_mint_burn AS (
 
+SELECT day, sum(amount) as amount
+
+from
+    (
     SELECT 
         date_trunc('day', evt_block_time) AS day, 
         SUM("_quantity"/1e18) AS amount 
@@ -80,6 +84,9 @@ fli_mint_burn AS (
     FROM setprotocol_v2."DebtIssuanceModule_evt_SetTokenRedeemed" 
     WHERE "_setToken" = '\xaa6e8127831c9de45ae56bb1b0d4d4da6e5665bd'
     GROUP BY 1
+    
+    )a
+group by 1
 ),
 
 fli_days AS (
@@ -117,7 +124,7 @@ fli_swap AS (
         ("amount1In" + "amount1Out")/1e18 AS a1_amt
     FROM uniswap_v2."Pair_evt_Swap" sw
     WHERE contract_address = '\xf91c12dae1313d0be5d7a27aa559b1171cc1eac5' -- liq pair address I am searching the price for
-        AND sw.evt_block_time >= '202-02-11'
+        AND sw.evt_block_time >= '2021-02-11'
 
 ),
 
@@ -175,20 +182,162 @@ GROUP BY 1
 
 )
 
+-- Uniswap v3
+, pool as (
+select
+            pool,
+            token0,
+            token1
+from        uniswap_v3."Factory_evt_PoolCreated"
+where       pool = '\x151ccb92bc1ed5c6d0f9adb5cec4763ceb66ac7f'
+)
+
+, tokens as (
+select      * 
+from        erc20."tokens"
+)
+
+-- Liquidity added to the pool
+, mint as (
+select      *
+from        uniswap_v3."Pair_evt_Mint" a
+inner join  pool
+on          pool.pool = a.contract_address
+)
+
+-- Liquidity removed from the pool
+, burn as (
+select      *
+from        uniswap_v3."Pair_evt_Burn" a
+inner join  pool
+on          pool.pool = a.contract_address
+)
+
+-- Swaps
+, swap as (
+select      * 
+from        uniswap_v3."Pair_evt_Swap" a
+inner join  pool
+on          pool.pool = a.contract_address
+)
+
+-- Aggregating data to evt_block_time level so duplicates due to activity at the same evt_block_time are avoided
+, mint_agg as (
+select
+            evt_block_time,
+            pool,
+            sum(amount0) as mint0,
+            sum(amount1) as mint1
+from        mint
+group by    1,2
+)
+
+, burn_agg as (
+select
+            evt_block_time,
+            pool,
+            sum(amount0) as burn0,
+            sum(amount1) as burn1
+from        burn
+group by    1,2
+)
+
+, swap_agg as (
+select      
+            evt_block_time,
+            pool,
+            sum(amount0) as swap0,
+            sum(amount1) as swap1
+
+from        swap
+group by    1,2
+)
+
+, mint_burn_swap as (
+select      
+            coalesce(a.evt_block_time, b.evt_block_time, c.evt_block_time) as evt_block_time,
+            coalesce(a.pool, b.pool, c.pool) as pool,
+            mint0,
+            mint1,
+            (burn0 * -1) as burn0,
+            (burn1 * -1) as burn1,
+            swap0,
+            swap1
+
+from        mint_agg a
+full outer join burn_agg b
+on          a.evt_block_time = b.evt_block_time
+and         a.pool = b.pool
+full outer join swap_agg c
+on          a.evt_block_time = c.evt_block_time
+and         a.pool = c.pool
+)
+
+, amounts as (
+select
+            evt_block_time,
+            pool,
+            coalesce(mint0,0) + coalesce(burn0,0) + coalesce(swap0,0) as amount0,
+            coalesce(mint1,0) + coalesce(burn1,0) + coalesce(swap1,0) as amount1,
+            mint0,
+            mint1,
+            burn0,
+            burn1,
+            swap0,
+            swap1
+from        mint_burn_swap
+)
+
+
+-- Final dataset at evt_block_time periodicity and including extra columns
+, cumsum_amounts as (
+select
+            a.*,
+            (sum(amount0) over(order by evt_block_time, a.pool))/10^t0.decimals as reserve0,
+            (sum(amount1) over(order by evt_block_time, a.pool))/10^t1.decimals as reserve1,
+            t0.symbol as token0,
+            t1.symbol as token1
+            
+from        amounts a
+
+inner join  pool
+on          pool.pool = a.pool
+
+inner join  tokens t0
+on          t0.contract_address = pool.token0
+
+inner join  tokens t1
+on          t1.contract_address = pool.token1
+)
+
+, daily_resevers as (
+select
+            date_trunc('day', evt_block_time) as dt,
+            pool,
+            token0,
+            token1,
+            avg(reserve0) as reserve0,
+            avg(reserve1) as reserve1
+
+from        cumsum_amounts
+
+group by    1,2,3,4
+)
+
 SELECT
-    DISTINCT
     t.day,
     'ETH2X-FLI' AS product,
     t.fli AS total,
     0 AS incentivized,
     t.fli - 0 AS unincentivized,
-    l.reserves AS liquidity,
+    (l.reserves + coalesce(univ3.reserve0,0)) AS liquidity,
     t.fli * p.price AS tvl,
     0 * p.price AS itvl,
     (t.fli - 0) * p.price AS utvl,
-    l.reserves * p.price AS liquidity_value,
+    (l.reserves + univ3.reserve0) * p.price AS liquidity_value,
     p.price
 FROM fli_total_supply t
 LEFT JOIN fli_liquidity_supply l ON t.day = l.dt
 LEFT JOIN fli_price_feed p on t.day = p.dt
+left join daily_resevers as univ3 on univ3.dt = t.day
 WHERE t.day >= '2021-03-14'
