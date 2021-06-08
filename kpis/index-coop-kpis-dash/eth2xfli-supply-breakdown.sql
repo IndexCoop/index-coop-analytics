@@ -1,4 +1,4 @@
--- https://duneanalytics.com/queries/56930
+-- https://duneanalytics.com/queries/60094
 
 -- ETH2x-FLI Supply Breakdown
 WITH fli_uniswap_pairs AS (
