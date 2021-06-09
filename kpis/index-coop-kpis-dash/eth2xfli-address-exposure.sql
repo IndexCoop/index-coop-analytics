@@ -1,4 +1,4 @@
--- https://duneanalytics.com/queries/59594
+-- https://duneanalytics.com/queries/25253
 
 WITH transfers AS (
 
