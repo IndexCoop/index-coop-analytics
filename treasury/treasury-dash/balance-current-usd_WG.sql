@@ -1,5 +1,7 @@
 /*
-    query here: https://duneanalytics.com/queries/48501
+    query here: https://duneanalytics.com/queries/54043
+
+    forked from https://duneanalytics.com/queries/22041/46378
 
     --- INDEX Treasury ---
 
@@ -9,15 +11,10 @@
     '\x26e316f5b3819264DF013Ccf47989Fb8C891b088' -- Community Treasury Year 1 Vesting
     )    
     
-    INDEX from 
-    Growth Working Group: 0xd4bcc2b5d21fe67c8be351cdb47ec1b2cd7e84a7
-    Analytics Working Group: 0xe83de75eb3e84f3cbca3576351d81dbeda5645d4
-    Centralised Exchange Listing: 0x154c154c589b4aeccbf186fb8bc668cd7c213762 (DPI, USDT & INDEX )
 
 */
 
 -- Start Generalized Price Feed block - see generalized_price_feed.sql
-
 WITH prices_usd AS (
 
     SELECT
@@ -155,25 +152,9 @@ SELECT
 FROM swap_price_feed
 
 )
-
-SELECT
-    *
-FROM index_price
-WHERE dt > '2020-10-06'
-ORDER BY 1
 -- End price feed block - output is CTE "prices"
 , wallets AS (
-    SELECT 'INDEX' AS org
-        , '\xe2250424378b6a6dC912f5714cfd308a8D593986'::bytea AS address
-        , 'Treasury Committee' AS wallet
-    /*
-    union
-    select 'INDEX' AS org
-    , '\x26e316f5b3819264DF013Ccf47989Fb8C891b088'::bytea AS address
-    , 'Community Treasury Year 1 Vesting' AS wallet
-    */
-)
-, addresses as (
+    
     select '\x154c154c589b4aeccbf186fb8bc668cd7c213762'::bytea as address
         , 'Centralised Exchange Listing' as address_alias
     union all
@@ -256,7 +237,7 @@ ORDER BY 1
         , 'Set Labs Year 3 Vesting' as address_alias
     union all
     select '\x319b852cd28b1cbeb029a3017e787b98e62fd4e2'::bytea as address
-        , 'Rewards Merkle Distributor / January 2021 Merkle Rewards Account' as address_alias
+        , 'January 2021 Merkle Rewards Account' as address_alias
     union all
     select '\xeb1cbc809b21dddc71f0f9edc234eee6fb29acee'::bytea as address
         , 'December 2020 Merkle Rewards Account' as address_alias
@@ -275,6 +256,9 @@ ORDER BY 1
     union all
     select '\x973a526a633313b2d32b9a96ed16e212303d6905'::bytea as address
         ,	'April 2021 Merkle Rewards Account' as address_alias
+    union all
+    select '\x10F87409E405c5e44e581A4C3F2eECF36AAf1f92'::bytea as address
+        , 'INDEX Sale 2 of 3 Multisig - Dylan, Greg, Punia' as address_alias
 )
 
 , creation_days AS (
@@ -284,42 +268,100 @@ ORDER BY 1
     WHERE address IN (SELECT address FROM wallets)
     AND TYPE = 'create'
 )
-, weeks AS (
+, days AS (
     SELECT 
-        generate_series(date_trunc('week', MIN(day))
-                        , date_trunc('week', NOW())
-                        , '1 week') AS week -- Generate all weeks since the first contract
+        generate_series(MIN(day), date_trunc('day', NOW()), '1 day') AS day -- Generate all days since the first contract
     FROM creation_days
 )
 , transfers AS (
     --ERC20 Tokens
     SELECT
-        date_trunc('day', evt_block_time) AS day
-        , "from" AS sender_address
-        , contract_address
-        , "to" as recipient_address
-        , sum(value) AS amount
+        date_trunc('day', evt_block_time) AS day,
+        "from" AS address,
+        contract_address,
+        sum(-value) AS amount
     FROM erc20."ERC20_evt_Transfer"
     WHERE "from" IN (SELECT address FROM wallets)
     AND evt_block_time >= (SELECT min(day) FROM creation_days)
-    GROUP BY 1,2,3,4
-)
-, transfers_month AS (
+    GROUP BY 1,2,3
+    
+    UNION ALL
+
     SELECT
-        date_trunc('month', tr.day) as month
-        , tr.sender_address
-        , coalesce(a.address_alias, 'unknown') as recipient_address_alias
-        , tr.recipient_address
-        , tok.symbol
-        , avg(p.price) as avg_price
-        , sum(tr.amount/10^(tok.decimals)) as amount_token
-        , sum(tr.amount/10^(tok.decimals) * coalesce(p.price,0)) AS amount_usd
-    FROM transfers tr
-    inner join erc20.tokens tok on tr.contract_address = tok.contract_address
-    left join prices p on tok.symbol = p.symbol and p.dt = tr.day
-    left join addresses a on tr.recipient_address = a.address
-    GROUP BY 1,2,3,4,5
+        date_trunc('day', evt_block_time) AS day,
+        "to" AS address,
+        contract_address,
+        sum(value) AS amount
+    FROM erc20."ERC20_evt_Transfer"
+    WHERE "to" IN (SELECT address FROM wallets)
+    AND evt_block_time >= (SELECT min(day) FROM creation_days)
+    GROUP BY 1,2,3
 )
-select *
-from transfers_month
-order by 1 desc
+
+, decimals as (
+    select distinct contract_address
+    , decimals
+    from prices.usd
+    WHERE symbol in ('INDEX', 'DPI', 'MVI', 'ETH2x-FLI', 'BTC2x-FLI', 'USDC')
+)
+
+, transfers_day AS (
+    SELECT
+        t.day,
+        t.address,
+        t.contract_address,
+        sum(t.amount/10^coalesce(d.decimals,18)) AS change 
+    FROM transfers t
+    left join decimals d on t.contract_address = d.contract_address
+)
+
+, balances_w_gap_days AS (
+    SELECT
+        day,
+        address,
+        contract_address,
+        sum(change) OVER (PARTITION BY address, contract_address ORDER BY day) AS "balance",
+        lead(day, 1, now()) OVER (PARTITION BY address, contract_address ORDER BY day) AS next_day
+    FROM transfers_day
+    GROUP BY 1,2,3
+)
+
+, balances_all_days AS (
+    SELECT
+        d.day,
+        b.address,
+        b.contract_address,
+        sum(b.balance) AS "balance"
+    FROM balances_w_gap_days b
+    INNER JOIN days d ON b.day <= d.day AND d.day < b.next_day
+    GROUP BY 1,2,3
+    ORDER BY 1,2,3
+)
+, usd_value_all_days as (
+    SELECT
+        b.day,
+    --    b.address,
+        w.address_alias,
+    --    w.org,
+        b.contract_address,
+        p.symbol AS token,
+        b.balance,
+        p.price,
+        b.balance * coalesce(p.price,0) AS usd_value
+        , rank() over (order by b.day desc)
+    FROM balances_all_days b
+    left join erc20.tokens t on b.contract_address = t.contract_address
+    LEFT OUTER JOIN prices p ON t.symbol = p.symbol AND b.day = p.dt
+    LEFT OUTER JOIN wallets w ON b.address = w.address
+    ORDER BY usd_value DESC
+    LIMIT 10000
+)
+select 
+    address_alias
+    , token
+    , balance
+    , usd_value
+    , contract_address
+from usd_value_all_days
+where rank = 1
+;

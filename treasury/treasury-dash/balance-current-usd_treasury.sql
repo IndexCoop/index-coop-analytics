@@ -1,5 +1,7 @@
 /*
-    query here: https://duneanalytics.com/queries/47058
+    query here: https://duneanalytics.com/queries/44939
+
+    forked from https://duneanalytics.com/queries/22041/46378
 
     --- INDEX Treasury ---
 
@@ -13,17 +15,17 @@
 */
 
 -- Start Generalized Price Feed block - see generalized_price_feed.sql
-WITH prices_usd AS (
 
 WITH prices_usd AS (
 
     SELECT
         date_trunc('day', minute) AS dt
         , symbol
+        , decimals
         , AVG(price) AS price
     FROM prices.usd
-    WHERE symbol in ('INDEX', 'DPI', 'MVI', 'ETH2x-FLI', 'BTC2x-FLI')
-    GROUP BY 1,2
+    WHERE symbol in ('INDEX', 'DPI', 'MVI', 'ETH2x-FLI', 'BTC2x-FLI', 'USDC')
+    GROUP BY 1,2,3
 )
     
 , eth_swaps AS (
@@ -147,23 +149,22 @@ FROM prices_usd
 
 UNION ALL
 
-SELECT
-    *
+SELECT dt  
+    , symbol
+    , 18 as decimals -- all the INDEX tokens have 18 decimals
+    , price
 FROM swap_price_feed
 
 )
-
-SELECT
-    *
-FROM index_price
-WHERE dt > '2020-10-06'
-ORDER BY 1
 -- End price feed block - output is CTE "prices"
 , wallets AS (
     SELECT 'INDEX' AS org
+        , '\x9467cfadc9de245010df95ec6a585a506a8ad5fc'::bytea AS address
+        , 'Treasury Wallet' AS wallet
+    /*UNION
+    SELECT 'INDEX' AS org
         , '\xe2250424378b6a6dC912f5714cfd308a8D593986'::bytea AS address
         , 'Treasury Committee' AS wallet
-    /*
     union
     select 'INDEX' AS org
     , '\x26e316f5b3819264DF013Ccf47989Fb8C891b088'::bytea AS address
@@ -178,21 +179,18 @@ ORDER BY 1
     WHERE address IN (SELECT address FROM wallets)
     AND TYPE = 'create'
 )
-, weeks AS (
+, days AS (
     SELECT 
-        generate_series(date_trunc('week', MIN(day))
-                        , date_trunc('week', NOW())
-                        , '1 week') AS week -- Generate all weeks since the first contract
+        generate_series(MIN(day), date_trunc('day', NOW()), '1 day') AS day -- Generate all days since the first contract
     FROM creation_days
 )
 , transfers AS (
     --ERC20 Tokens
     SELECT
-        date_trunc('day', evt_block_time) AS day
-        , "from" AS address
-        , contract_address
-        , sum(-value) AS outflow
-        , 0 as inflow
+        date_trunc('day', evt_block_time) AS day,
+        "from" AS address,
+        contract_address,
+        sum(-value) AS amount
     FROM erc20."ERC20_evt_Transfer"
     WHERE "from" IN (SELECT address FROM wallets)
     AND evt_block_time >= (SELECT min(day) FROM creation_days)
@@ -201,50 +199,78 @@ ORDER BY 1
     UNION ALL
 
     SELECT
-        date_trunc('day', evt_block_time) AS day
-        , "to" AS address
-        , contract_address
-        , 0 as outflow
-        , sum(value) AS inflow
+        date_trunc('day', evt_block_time) AS day,
+        "to" AS address,
+        contract_address,
+        sum(value) AS amount
     FROM erc20."ERC20_evt_Transfer"
     WHERE "to" IN (SELECT address FROM wallets)
     AND evt_block_time >= (SELECT min(day) FROM creation_days)
     GROUP BY 1,2,3
 )
-, transfers_week AS (
-    SELECT
-        date_trunc('week', tr.day) as week
-        , tr.address
-        , tok.symbol
-        , avg(p.price) as avg_price
-        , sum(tr.inflow/10^(tok.decimals)) as inflow_token
-        , sum(tr.outflow/10^(tok.decimals)) AS outflow_token
-        , sum(tr.inflow/10^(tok.decimals) * coalesce(p.price,0)) AS inflow_usd
-        , sum(tr.outflow/10^(tok.decimals)* coalesce(p.price,0)) AS outflow_usd
-        
 
-        
-    FROM transfers tr
-    inner join erc20.tokens tok on tr.contract_address = tok.contract_address
-    left join prices p on tok.symbol = p.symbol and p.dt = tr.day
+, decimals as (
+    select distinct contract_address
+    , decimals
+    from prices.usd
+    WHERE symbol in ('INDEX', 'DPI', 'MVI', 'ETH2x-FLI', 'BTC2x-FLI', 'USDC')
+)
+
+, transfers_day AS (
+    SELECT
+        t.day,
+        t.address,
+        t.contract_address,
+        sum(t.amount/10^coalesce(d.decimals,18)) AS change 
+    FROM transfers t
+    left join decimals d on t.contract_address = d.contract_address
     GROUP BY 1,2,3
 )
-, transfers_week_balances as (
-    select t.*
-        , avg_price * sum(inflow_token + outflow_token) over 
-            (partition by symbol order by week asc rows between unbounded preceding and current row) as balance_usd
-    from transfers_week t
-    
+
+, balances_w_gap_days AS (
+    SELECT
+        day,
+        address,
+        contract_address,
+        sum(change) OVER (PARTITION BY address, contract_address ORDER BY day) AS "balance",
+        lead(day, 1, now()) OVER (PARTITION BY address, contract_address ORDER BY day) AS next_day
+    FROM transfers_day
 )
-SELECT
-    w.week
---        t.address,
-    -- , t.symbol
-    , sum(coalesce(t.inflow_usd,0)) as inflow_usd
-    , sum(coalesce(t.outflow_usd, 0)) as outflow_usd
-    , sum(t.balance_usd) as balance_usd
 
-FROM weeks w
-left join transfers_week_balances t ON w.week = t.week
-group by 1
-
+, balances_all_days AS (
+    SELECT
+        d.day,
+--        b.address,
+        b.contract_address,
+        sum(b.balance) AS "balance"
+    FROM balances_w_gap_days b
+    INNER JOIN days d ON b.day <= d.day AND d.day < b.next_day
+    GROUP BY 1,2 --,3
+    ORDER BY 1,2 --,3
+)
+, usd_value_all_days as (
+    SELECT
+        b.day,
+    --    b.address,
+    --    w.wallet,
+    --    w.org,
+        b.contract_address,
+        p.symbol AS token,
+        b.balance,
+        p.price,
+        b.balance * coalesce(p.price,0) AS usd_value
+        , rank() over (order by b.day desc)
+    FROM balances_all_days b
+    left join erc20.tokens t on b.contract_address = t.contract_address
+    LEFT OUTER JOIN prices p ON t.symbol = p.symbol AND b.day = p.dt
+    -- LEFT OUTER JOIN wallets w ON b.address = w.address
+    ORDER BY usd_value DESC
+    LIMIT 10000
+)
+select contract_address
+    , token
+    , balance
+    , usd_value
+from usd_value_all_days
+where rank = 1
+;
