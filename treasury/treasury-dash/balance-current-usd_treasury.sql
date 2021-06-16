@@ -267,8 +267,7 @@ FROM swap_price_feed
     ORDER BY usd_value DESC
     LIMIT 10000
 )
-select contract_address
-    , token
+select token
     , balance
     , usd_value
 from usd_value_all_days
