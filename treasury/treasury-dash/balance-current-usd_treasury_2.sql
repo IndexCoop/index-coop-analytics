@@ -1,5 +1,10 @@
 /*
-    query here: https://duneanalytics.com/queries/54043
+    This should be identical to USD Treasury Balance 1
+    with the query here: https://duneanalytics.com/queries/44939
+
+    Except that it takes a different "end_date" parameter.
+    The point of this is to show balances on two different days.
+    Query for this one here: https://duneanalytics.com/queries/66423
 
     forked from https://duneanalytics.com/queries/22041/46378
 
@@ -15,15 +20,17 @@
 */
 
 -- Start Generalized Price Feed block - see generalized_price_feed.sql
+
 WITH prices_usd AS (
 
     SELECT
         date_trunc('day', minute) AS dt
         , symbol
+        , decimals
         , AVG(price) AS price
     FROM prices.usd
-    WHERE symbol in ('INDEX', 'DPI', 'MVI', 'ETH2x-FLI', 'BTC2x-FLI')
-    GROUP BY 1,2
+    WHERE symbol in ('INDEX', 'DPI', 'MVI', 'ETH2x-FLI', 'BTC2x-FLI', 'USDC')
+    GROUP BY 1,2,3
 )
     
 , eth_swaps AS (
@@ -147,117 +154,27 @@ FROM prices_usd
 
 UNION ALL
 
-SELECT
-    *
+SELECT dt  
+    , symbol
+    , 18 as decimals -- all the INDEX tokens have 18 decimals
+    , price
 FROM swap_price_feed
 
 )
 -- End price feed block - output is CTE "prices"
 , wallets AS (
-    select '\x154c154c589b4aeccbf186fb8bc668cd7c213762'::bytea as address
-        , 'Centralised Exchange Listing' as address_alias
-    union all
-    select '\xe83de75eb3e84f3cbca3576351d81dbeda5645d4'::bytea as address
-        , 'Analytics Working Group' as address_alias
-    union all
-    select '\xd4bcc2b5d21fe67c8be351cdb47ec1b2cd7e84a7'::bytea as address
-        , 'Growth Working Group' as address_alias
-    union all
-    select '\x0dea6d942a2d8f594844f973366859616dd5ea50'::bytea as address
-        , 'DPI Manager' as address_alias
-    union all
-    select '\x25100726b25a6ddb8f8e68988272e1883733966e'::bytea as address
-        , 'DPI Rebalancer' as address_alias
-    union all
-    select '\xaa6e8127831c9de45ae56bb1b0d4d4da6e5665bd'::bytea as address
-        , 'ETH2x-FLI Token' as address_alias
-    union all
-    select '\x445307De5279cD4B1BcBf38853f81b190A806075'::bytea as address
-        , 'ETH2x-FLI Manager' as address_alias
-    union all
-    select '\x1335D01a4B572C37f800f45D9a4b36A53a898a9b'::bytea as address
-        , 'ETH2x-FLI Strategy Adapter' as address_alias
-    union all
-    select '\x26F81381018543eCa9353bd081387F68fAE15CeD'::bytea as address
-        , 'ETH2x-FLI Fee Adapter' as address_alias
-    union all
-    select '\x0F1171C24B06ADed18d2d23178019A3B256401D3'::bytea as address
-        , 'ETH2x-FLI SupplyCapIssuanceHook' as address_alias
-    union all
-    select '\x0b498ff89709d3838a063f1dfa463091f9801c2b'::bytea as address
-        , 'BTC2x-FLI Token' as address_alias
-    union all
-    select '\xC7Aede3B12daad3ffa48fc96CCB65659fF8D261a'::bytea as address
-        , 'BTC2x-FLI Manager' as address_alias
-    union all
-    select '\x4a99733458349505A6FCbcF6CD0a0eD18666586A'::bytea as address
-        , 'BTC2x-FLI Strategy Adapter' as address_alias
-    union all
-    select '\xA0D95095577ecDd23C8b4c9eD0421dAc3c1DaF87'::bytea as address
-        , 'BTC2x-FLI Fee Adapter' as address_alias
-    union all
-    select '\x6c8137f2f552f569cc43bc4642afbe052a12441c'::bytea as address
-        , 'BTC2x-FLI SupplyCapAllowedCallerIssuanceHook' as address_alias
-    union all
-    select '\x0954906da0Bf32d5479e25f46056d22f08464cab'::bytea as address
-        , 'INDEX Token Address' as address_alias
-    union all
-    select '\xDD111F0fc07F4D89ED6ff96DBAB19a61450b8435'::bytea as address
-        , 'INDEX Initial Airdrop Address' as address_alias
-    union all
-    select '\x8f06FBA4684B5E0988F215a47775Bb611Af0F986'::bytea as address
-        , 'INDEX DPI Farming Contract 1 (Oct - Dec)' as address_alias
-    union all
-    select '\xB93b505Ed567982E2b6756177ddD23ab5745f309'::bytea as address
-        , 'INDEX DPI Farming Contract 2 (Dec. 2020 - March 2021)' as address_alias
-    union all
-    select '\x66a7d781828B03Ee1Ae678Cd3Fe2D595ba3B6000'::bytea as address
-        , 'Index Methodologist Bounty (18 months vesting)' as address_alias
-    union all
-    select '\x26e316f5b3819264DF013Ccf47989Fb8C891b088'::bytea as address
-        , 'Community Treasury Year 1 Vesting' as address_alias
-    union all
-    select '\xd89C642e52bD9c72bCC0778bCf4dE307cc48e75A'::bytea as address
-        , 'Community Treasury Year 2 Vesting' as address_alias
-    union all
-    select '\x71F2b246F270c6AF49e2e514cA9F362B491Fbbe1'::bytea as address
-        , 'Community Treasury Year 3 Vesting' as address_alias
-    union all
-    select '\xf64d061106054Fe63B0Aca68916266182E77e9bc'::bytea as address
-        , 'Set Labs Year 1 Vesting' as address_alias
-    -- union all
-    -- select NULL as address -- need to look this up - on the website the address is invalid
-    --     , 'Set Labs Year 2 Vesting' as address_alias
-    union all
-    select '\x0D627ca04A97219F182DaB0Dc2a23FB4a5B02A9D'::bytea as address
-        , 'Set Labs Year 3 Vesting' as address_alias
-    union all
-    select '\x0D627ca04A97219F182DaB0Dc2a23FB4a5B02A9D'::bytea as address
-        , 'Set Labs Year 3 Vesting' as address_alias
-    union all
-    select '\x319b852cd28b1cbeb029a3017e787b98e62fd4e2'::bytea as address
-        , 'Rewards Merkle Distributor / January 2021 Merkle Rewards Account' as address_alias
-    union all
-    select '\xeb1cbc809b21dddc71f0f9edc234eee6fb29acee'::bytea as address
-        , 'December 2020 Merkle Rewards Account' as address_alias
-    union all
-    select '\x209f012602669c88bbda687fbbfe6a0d67477a5d'::bytea as address
-        , 	'October 2020 Merkle Rewards Account' as address_alias
-    union all
-    select '\xa6bb7b6b2c5c3477f20686b98ea09796f8f93184'::bytea as address
-        ,	'November 2020 Merkle Rewards Account' as address_alias
-    union all
-    select '\xCa3C3570beb35E5d3D85BCd8ad8F88BefaccFF10'::bytea as address
-        , 'February 2021 Merkle Rewards Account' as address_alias
-    union all
-    select '\xa87fbb413f8de11e47037c5d697cc03de29e4e4b'::bytea as address
-        , 'March 2021 Merkle Rewards Account' as address_alias
-    union all
-    select '\x973a526a633313b2d32b9a96ed16e212303d6905'::bytea as address
-        ,	'April 2021 Merkle Rewards Account' as address_alias
-    union all
-    select '\x10F87409E405c5e44e581A4C3F2eECF36AAf1f92'::bytea as address
-        , 'INDEX Sale 2 of 3 Multisig - Dylan, Greg, Punia' as address_alias
+    SELECT 'INDEX' AS org
+        , '\x9467cfadc9de245010df95ec6a585a506a8ad5fc'::bytea AS address
+        , 'Treasury Wallet' AS wallet
+    /*UNION
+    SELECT 'INDEX' AS org
+        , '\xe2250424378b6a6dC912f5714cfd308a8D593986'::bytea AS address
+        , 'Treasury Committee' AS wallet
+    union
+    select 'INDEX' AS org
+    , '\x26e316f5b3819264DF013Ccf47989Fb8C891b088'::bytea AS address
+    , 'Community Treasury Year 1 Vesting' AS wallet
+    */
 )
 
 , creation_days AS (
@@ -297,13 +214,21 @@ FROM swap_price_feed
     GROUP BY 1,2,3
 )
 
+, decimals as (
+    select distinct contract_address
+    , decimals
+    from prices.usd
+    WHERE symbol in ('INDEX', 'DPI', 'MVI', 'ETH2x-FLI', 'BTC2x-FLI', 'USDC')
+)
+
 , transfers_day AS (
     SELECT
         t.day,
         t.address,
         t.contract_address,
-        sum(t.amount/10^18) AS change -- all target contracts have decimals of 18
+        sum(t.amount/10^coalesce(d.decimals,18)) AS change 
     FROM transfers t
+    left join decimals d on t.contract_address = d.contract_address
     GROUP BY 1,2,3
 )
 
@@ -320,19 +245,19 @@ FROM swap_price_feed
 , balances_all_days AS (
     SELECT
         d.day,
-        b.address,
+--        b.address,
         b.contract_address,
         sum(b.balance) AS "balance"
     FROM balances_w_gap_days b
     INNER JOIN days d ON b.day <= d.day AND d.day < b.next_day
-    GROUP BY 1,2,3
-    ORDER BY 1,2,3
+    GROUP BY 1,2 --,3
+    ORDER BY 1,2 --,3
 )
 , usd_value_all_days as (
     SELECT
         b.day,
     --    b.address,
-        w.address_alias,
+    --    w.wallet,
     --    w.org,
         b.contract_address,
         p.symbol AS token,
@@ -342,19 +267,16 @@ FROM swap_price_feed
         , rank() over (order by b.day desc)
     FROM balances_all_days b
     left join erc20.tokens t on b.contract_address = t.contract_address
-    inner JOIN prices p ON t.symbol = p.symbol AND b.day = p.dt
-    LEFT OUTER JOIN wallets w ON b.address = w.address
-    where b.day <= '{{ end_date }}'
+    LEFT OUTER JOIN prices p ON t.symbol = p.symbol AND b.day = p.dt
+    -- LEFT OUTER JOIN wallets w ON b.address = w.address
+    where b.day <= '{{ end_date_2 }}'
     ORDER BY usd_value DESC
     LIMIT 10000
 )
-select 
-    address_alias
+select contract_address
     , token
     , balance
     , usd_value
-    , contract_address
 from usd_value_all_days
 where rank = 1
 ;
-
