@@ -124,7 +124,7 @@ WITH prices_usd AS (
 
     SELECT
         date_trunc('day', hour) AS dt
-        , u.symbol
+        , symbol
         , AVG(usd_price) AS price
     FROM swap_feed u
     left join prices_usd p on date_trunc('day', u.hour) = p.dt
