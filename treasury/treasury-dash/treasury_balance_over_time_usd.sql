@@ -251,19 +251,20 @@ FROM swap_price_feed
 
 
 SELECT
-    b.day,
+    date_trunc('{{ date_granularity}}',b.day) as date
 --    b.address,
 --    w.wallet,
 --    w.org,
-    b.contract_address,
-    p.symbol AS token,
-    b.balance,
-    p.price,
-    b.balance * coalesce(p.price,0) AS usd_value
+    , b.contract_address
+    , p.symbol AS token
+    -- b.balance,
+    -- p.price,
+    , avg(b.balance * coalesce(p.price,0)) AS avg_usd_value
 FROM balances_all_days b
 left join erc20.tokens t on b.contract_address = t.contract_address
 LEFT OUTER JOIN prices p ON t.symbol = p.symbol AND b.day = p.dt
 -- LEFT OUTER JOIN wallets w ON b.address = w.address
-ORDER BY usd_value DESC
+where b.day between '{{ start_date }}' and '{{ end_date }}'
+group by 1,2,3
 LIMIT 10000
 ;
