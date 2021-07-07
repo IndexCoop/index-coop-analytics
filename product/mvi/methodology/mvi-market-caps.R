@@ -3,13 +3,13 @@ library(tidyverse)
 library(lubridate)
 
 # get all symbols
-symbols <- c('ghst', 'audio', 'axs', 'mana', 'dg', 'meme', 'enj', 'nftx', 'rari', 
-             'rfox', 'revv', 'shroom', 'tvk', 'sand', 'uos', 'whale', 'chain', 'fnt', 'gala', 'muse',
-             'soul', 'slp', 'abyss', 'waxp', 'chz')
+symbols <- c('audio', 'axs', 'mana', 'dg', 'meme', 'enj', 'nftx', 'rari', 
+             'rfox', 'revv', 'tvk', 'sand', 'whale', 'gala', 'muse', 'waxp', 'chz',
+             'ern', 'ilv')
 
 # if a new token needs to be added, this section will help grab the id for the token
 
-# symbols_new <- c('waxp')
+# symbols_new <- c('ern', 'ilv')
 # 
 # r1 <- GET('https://api.coingecko.com/api/v3/coins/list')
 # coins <- content(r1)
@@ -18,10 +18,9 @@ symbols <- c('ghst', 'audio', 'axs', 'mana', 'dg', 'meme', 'enj', 'nftx', 'rari'
 # df %>% filter(symbol %in% symbols_new) %>% pull(id)
 
 # get all id's
-ids <- c('aavegotchi', 'audius', 'axie-infinity', 'decentraland', 'decentral-games', 'degenerator', 'enjincoin',
-         'nftx', 'rarible', 'redfox-labs-2', 'revv', 'shroom-finance', 'terra-virtua-kolect', 'the-sandbox',
-         'ultra', 'whale', 'chain-games', 'falcon-token', 'gala', 'muse-2', 'phantasma', 'small-love-potion',
-         'the-abyss', 'wax', 'chiliz')
+ids <- c('audius', 'axie-infinity', 'decentraland', 'decentral-games', 'degenerator', 'enjincoin',
+         'nftx', 'rarible', 'redfox-labs-2', 'revv', 'terra-virtua-kolect', 'the-sandbox', 'whale', 
+         'gala', 'muse-2', 'wax', 'chiliz', 'ethernity-chain', 'illuvium')
 
 # query market cap and circulation data for all tokens
 for(id in ids){
@@ -47,7 +46,7 @@ for(id in ids){
                  "percent_supply" = perc_supply,
                  "symbol" = symbols[which(id == ids)])
   
-  if(id == 'aavegotchi') {
+  if(id == 'audius') {
     
     final <- temp
     
@@ -78,7 +77,7 @@ f <- final %>%
   fill(-date)
 
 # write data to csv
-t %>% write_csv("mvi_token_market_caps_05_01_2021.csv")
-p %>% write_csv("mvi_token_percent_supply_05_01_2021.csv")
-f %>% write_csv("mvi_token_fully_diluted_05_01_2021.csv")
+t %>% write_csv("mvi_token_market_caps_07_07_2021.csv")
+p %>% write_csv("mvi_token_percent_supply_07_07_2021.csv")
+f %>% write_csv("mvi_token_fully_diluted_07_07_2021.csv")
 
