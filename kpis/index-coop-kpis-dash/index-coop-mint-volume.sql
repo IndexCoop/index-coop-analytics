@@ -36,6 +36,7 @@ FROM dpi_units
 
 ),
 
+--ETH2x-FLI
 fli_mint AS (
 
     SELECT 
@@ -67,44 +68,45 @@ fli AS (
 
 SELECT 
     *,
-    'ETH2X-FLI' AS product
+    'ETH2x-FLI' AS product
 FROM fli_units
 
 ),
 
-cgi_mint AS (
+-- BTC2x-FLI
+btc2x_mint AS (
 
     SELECT 
         date_trunc('day', evt_block_time) AS day, 
         SUM("_quantity"/1e18) AS amount 
-        FROM setprotocol_v2."BasicIssuanceModule_evt_SetTokenIssued"
-        WHERE "_setToken" = '\xada0a1202462085999652dc5310a7a9e2bf3ed42'
+        FROM setprotocol_v2."DebtIssuanceModule_evt_SetTokenIssued"
+        WHERE "_setToken" = '\x0b498ff89709d3838a063f1dfa463091f9801c2b'
         GROUP BY 1
-
+        
 ),
 
-cgi_days AS (
+btc2x_days AS (
     
-    SELECT generate_series('2021-02-10'::timestamp, date_trunc('day', NOW()), '1 day') AS day -- Generate all days since the first contract
+    SELECT generate_series('2021-05-11'::timestamp, date_trunc('day', NOW()), '1 day') AS day -- Generate all days since the first contract
     
 ),
 
-cgi_units AS (
+btc2x_units AS (
 
     SELECT
         d.day,
         COALESCE(m.amount, 0) AS amount
-    FROM cgi_days d
-    LEFT JOIN cgi_mint m ON d.day = m.day
+    FROM btc2x_days d
+    LEFT JOIN btc2x_mint m ON d.day = m.day
     
 ),
 
-cgi AS (
+btc2x AS (
 
-SELECT 
-    *,
-    'CGI' AS product
-FROM cgi_units
+    SELECT 
+        *,
+        'BTC2x-FLI' AS product
+    FROM btc2x_units
 
 ),
 
@@ -152,7 +154,7 @@ SELECT * FROM fli
 
 UNION ALL
 
-SELECT * FROM cgi
+SELECT * FROM btc2x
 
 UNION ALL
 

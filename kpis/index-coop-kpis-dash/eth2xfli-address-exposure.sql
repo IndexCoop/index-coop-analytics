@@ -1,4 +1,4 @@
--- https://duneanalytics.com/queries/25253/52764
+-- https://duneanalytics.com/queries/25253
 
 WITH transfers AS (
 
@@ -44,6 +44,8 @@ balancer_add AS (
     )
 
 ),
+
+
 
 balancer_remove AS (
 
@@ -183,6 +185,41 @@ uniswap_remove AS (
 
 ),
 
+
+uniswapv3_add as (
+
+SELECT
+	"from" as address,
+	amount0 / 1e18 as amount,
+	date_trunc('day', block_time) AS evt_block_day,
+	'uniswapv3_add' as type,
+	hash as evt_tx_hash
+	
+	FROM uniswap_v3."Pair_evt_Mint" m
+	LEFT JOIN ethereum."transactions" tx ON m.evt_tx_hash = tx.hash
+	WHERE tx.block_time > '5/4/21'
+	and contract_address = '\x151ccb92bc1ed5c6d0f9adb5cec4763ceb66ac7f'
+	
+),
+
+
+uniswapv3_remove as (
+
+SELECT
+	"from" as address,
+	-amount0 / 1e18 as amount,
+	date_trunc('day', block_time) AS evt_block_day,
+	'uniswapv3_add' as type,
+	hash as evt_tx_hash
+	
+	FROM uniswap_v3."Pair_evt_Burn" m
+	LEFT JOIN ethereum."transactions" tx ON m.evt_tx_hash = tx.hash
+	WHERE tx.block_time > '5/4/21'
+	and contract_address = '\x151ccb92bc1ed5c6d0f9adb5cec4763ceb66ac7f'
+	
+),
+
+
 lp AS (
 
 SELECT * FROM uniswap_add
@@ -198,6 +235,14 @@ SELECT * FROM balancer_add
 UNION ALL
 
 SELECT * FROM balancer_remove
+
+union all
+
+select * from uniswapv3_add
+
+union all
+
+select * from uniswapv3_remove
 
 ),
 
@@ -253,7 +298,8 @@ exposure AS (
     LEFT JOIN contracts c ON m.address = c.address
     WHERE c.type IS NULL
       AND m.type IN ('mint', 'burn', 'transfer',
-      'uniswap_add', 'uniswap_remove', 'balancer_add', 'balancer_remove')
+      'uniswap_add', 'uniswap_remove', 'balancer_add', 'balancer_remove',
+	  'uniswapv3_add', 'uniswapv3_remove')
     GROUP BY 1, 2
     ORDER BY 1, 2
 

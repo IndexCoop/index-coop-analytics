@@ -21,6 +21,7 @@ symbols <- c('audio', 'axs', 'mana', 'dg', 'meme', 'enj', 'nftx', 'rari',
 ids <- c('audius', 'axie-infinity', 'decentraland', 'decentral-games', 'degenerator', 'enjincoin',
          'nftx', 'rarible', 'redfox-labs-2', 'revv', 'terra-virtua-kolect', 'the-sandbox', 'whale', 
          'gala', 'muse-2', 'wax', 'chiliz', 'ethernity-chain', 'illuvium')
+         'gala', 'muse-2', 'wax', 'chiliz')
 
 # query market cap and circulation data for all tokens
 for(id in ids){

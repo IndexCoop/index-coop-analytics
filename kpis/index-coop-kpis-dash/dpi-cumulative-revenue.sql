@@ -119,7 +119,7 @@ dpi_revenue AS (
 SELECT
     DISTINCT
     *,
-    SUM(aum * .0065/365) OVER (ORDER BY day) AS revenue
+    SUM(aum * .00665/365) OVER (ORDER BY day) AS revenue
 FROM dpi_aum
 
 )

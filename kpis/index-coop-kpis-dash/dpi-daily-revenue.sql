@@ -119,7 +119,7 @@ dpi_revenue AS (
 SELECT
     DISTINCT
     *,
-    aum * .0065/365 AS revenue
+    aum * .00665/365 AS revenue
 FROM dpi_aum
 
 )
