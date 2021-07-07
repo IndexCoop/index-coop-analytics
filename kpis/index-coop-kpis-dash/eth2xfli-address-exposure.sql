@@ -1,4 +1,4 @@
--- https://duneanalytics.com/queries/25253
+-- https://duneanalytics.com/queries/77468
 
 WITH transfers AS (
 
@@ -185,20 +185,45 @@ uniswap_remove AS (
 
 ),
 
+uniswapv3_pool as (
+  select
+              pool,
+              token0,
+              tok0.symbol as symbol0,
+              tok0.decimals as decimals0,
+              token1,
+              tok1.symbol as symbol1,
+              tok1.decimals as decimals1
+
+  from        uniswap_v3."Factory_evt_PoolCreated" pool
+  
+  inner join  erc20."tokens" tok0 
+  on          pool.token0 = tok0.contract_address
+  
+  inner join  erc20."tokens" tok1 
+  on          pool.token1 = tok1.contract_address
+
+  where       token0 = '\xaa6e8127831c9de45ae56bb1b0d4d4da6e5665bd'
+  or          token1 = '\xaa6e8127831c9de45ae56bb1b0d4d4da6e5665bd'
+),
 
 uniswapv3_add as (
 
 SELECT
 	"from" as address,
-	amount0 / 1e18 as amount,
+	case 
+    when symbol0 = 'ETH2x-FLI' then amount0 / (10^decimals0) 
+    when symbol1 = 'ETH2x-FLI' then amount1 / (10^decimals1) 
+  end as amount,
 	date_trunc('day', block_time) AS evt_block_day,
 	'uniswapv3_add' as type,
 	hash as evt_tx_hash
 	
 	FROM uniswap_v3."Pair_evt_Mint" m
+  INNER JOIN uniswapv3_pool p
+  on p.pool = m.contract_address
 	LEFT JOIN ethereum."transactions" tx ON m.evt_tx_hash = tx.hash
 	WHERE tx.block_time > '5/4/21'
-	and contract_address = '\x151ccb92bc1ed5c6d0f9adb5cec4763ceb66ac7f'
 	
 ),
 
@@ -207,16 +232,19 @@ uniswapv3_remove as (
 
 SELECT
 	"from" as address,
-	-amount0 / 1e18 as amount,
+	case 
+    when symbol0 = 'ETH2x-FLI' then -amount0 / (10^decimals0) 
+    when symbol1 = 'ETH2x-FLI' then -amount1 / (10^decimals1) 
+  end as amount,
 	date_trunc('day', block_time) AS evt_block_day,
-	'uniswapv3_add' as type,
+	'uniswapv3_remove' as type,
 	hash as evt_tx_hash
 	
 	FROM uniswap_v3."Pair_evt_Burn" m
+  INNER JOIN uniswapv3_pool p
+  on p.pool = m.contract_address
 	LEFT JOIN ethereum."transactions" tx ON m.evt_tx_hash = tx.hash
 	WHERE tx.block_time > '5/4/21'
-	and contract_address = '\x151ccb92bc1ed5c6d0f9adb5cec4763ceb66ac7f'
-	
 ),
 
 
