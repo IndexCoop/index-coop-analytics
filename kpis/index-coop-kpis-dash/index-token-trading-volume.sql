@@ -1,4 +1,5 @@
 -- Query here: https://duneanalytics.com/queries/76637
+-- Index token address: '\x0954906da0Bf32d5479e25f46056d22f08464cab'
 
 WITH index_token AS (
 
