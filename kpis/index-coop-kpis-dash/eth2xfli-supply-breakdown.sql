@@ -12,8 +12,10 @@ WITH fli_uniswap_v3_supply AS (
                 pool,
                 token0,
                 token1
-    from        uniswap_v3."Factory_evt_PoolCreated"
-    where       pool = '\x151ccb92bc1ed5c6d0f9adb5cec4763ceb66ac7f'
+    from        uniswap_v3."Factory_evt_PoolCreated" 
+
+    where       token0 = '\xaa6e8127831c9de45ae56bb1b0d4d4da6e5665bd'
+    or          token1 = '\xaa6e8127831c9de45ae56bb1b0d4d4da6e5665bd'
     )
 
     , tokens as (
@@ -79,45 +81,47 @@ WITH fli_uniswap_v3_supply AS (
 
     , mint_burn_swap as (
     select      
-                coalesce(a.evt_block_time, b.evt_block_time, c.evt_block_time) as evt_block_time,
-                coalesce(a.pool, b.pool, c.pool) as pool,
-                mint0,
-                mint1,
-                (burn0 * -1) as burn0,
-                (burn1 * -1) as burn1,
-                swap0,
-                swap1
-
-    from        mint_agg a
-    full outer join burn_agg b
-    on          a.evt_block_time = b.evt_block_time
-    and         a.pool = b.pool
-    full outer join swap_agg c
-    on          a.evt_block_time = c.evt_block_time
-    and         a.pool = c.pool
+                evt_block_time,
+                pool,
+                mint0 as amount0,
+                mint1 as amount1
+    from        mint_agg
+    
+    union all
+    
+    select      
+                evt_block_time,
+                pool,
+                (burn0 * -1) as amount0,
+                (burn1 * -1) as amount1
+    from        burn_agg
+    
+    union all
+    
+    select      
+                evt_block_time,
+                pool,
+                swap0 as amount0,
+                swap1 as amount1
+    from        swap_agg
     )
 
     , amounts as (
     select
                 evt_block_time,
                 pool,
-                coalesce(mint0,0) + coalesce(burn0,0) + coalesce(swap0,0) as amount0,
-                coalesce(mint1,0) + coalesce(burn1,0) + coalesce(swap1,0) as amount1,
-                mint0,
-                mint1,
-                burn0,
-                burn1,
-                swap0,
-                swap1
+                sum(amount0) as amount0,
+                sum(amount1) as amount1
     from        mint_burn_swap
+    group by    1,2
     )
 
     -- Final dataset at evt_block_time periodicity and including extra descriptive columns
     , cumsum_amounts as (
     select
                 a.*,
-                (sum(amount0) over(order by evt_block_time, a.pool))/10^t0.decimals as reserve0,
-                (sum(amount1) over(order by evt_block_time, a.pool))/10^t1.decimals as reserve1,
+                (sum(amount0) over(partition by a.pool order by evt_block_time))/10^t0.decimals as reserve0,
+                (sum(amount1) over(partition by a.pool order by evt_block_time))/10^t1.decimals as reserve1,
                 t0.symbol as token0,
                 t1.symbol as token1
                 
@@ -132,17 +136,32 @@ WITH fli_uniswap_v3_supply AS (
     inner join  tokens t1
     on          t1.contract_address = pool.token1
     )
-
-    -- Average daily reserves of ETH2X-FLI on Uniswap v3
+    
+    -- Average daily reserves of ETH2X-FLI per pool
+    , avg_reserves_pool as (
     select
                 date_trunc('day', evt_block_time) as dt,
-                avg(reserve0) as reserves
-
+                pool,
+                token0,
+                token1,
+                avg(reserve0) as reserve0,
+                avg(reserve1) as reserve1
+                
     from        cumsum_amounts
 
+    group by    1,2,3,4
+    )
+    
+    select
+                dt,
+                sum(case 
+                        when token0 = 'ETH2x-FLI' then reserve0
+                        when token1 = 'ETH2x-FLI' then reserve1
+                    end) as reserves
+
+    from        avg_reserves_pool
+
     group by    1
-
-
 )
 
 ----------------------------------------------------------
