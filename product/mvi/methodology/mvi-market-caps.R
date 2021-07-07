@@ -4,11 +4,12 @@ library(lubridate)
 
 # get all symbols
 symbols <- c('audio', 'axs', 'mana', 'dg', 'meme', 'enj', 'nftx', 'rari', 
-             'rfox', 'revv', 'tvk', 'sand', 'whale', 'gala', 'muse', 'waxp', 'chz')
+             'rfox', 'revv', 'tvk', 'sand', 'whale', 'gala', 'muse', 'waxp', 'chz',
+             'ern', 'ilv')
 
 # if a new token needs to be added, this section will help grab the id for the token
 
-# symbols_new <- c('waxp')
+# symbols_new <- c('ern', 'ilv')
 # 
 # r1 <- GET('https://api.coingecko.com/api/v3/coins/list')
 # coins <- content(r1)
@@ -19,7 +20,7 @@ symbols <- c('audio', 'axs', 'mana', 'dg', 'meme', 'enj', 'nftx', 'rari',
 # get all id's
 ids <- c('audius', 'axie-infinity', 'decentraland', 'decentral-games', 'degenerator', 'enjincoin',
          'nftx', 'rarible', 'redfox-labs-2', 'revv', 'terra-virtua-kolect', 'the-sandbox', 'whale', 
-         'gala', 'muse-2', 'wax', 'chiliz')
+         'gala', 'muse-2', 'wax', 'chiliz', 'ethernity-chain', 'illuvium')
 
 # query market cap and circulation data for all tokens
 for(id in ids){
@@ -76,7 +77,7 @@ f <- final %>%
   fill(-date)
 
 # write data to csv
-t %>% write_csv("mvi_token_market_caps_06_21_2021.csv")
-p %>% write_csv("mvi_token_percent_supply_06_21_2021.csv")
-f %>% write_csv("mvi_token_fully_diluted_06_21_2021.csv")
+t %>% write_csv("mvi_token_market_caps_07_07_2021.csv")
+p %>% write_csv("mvi_token_percent_supply_07_07_2021.csv")
+f %>% write_csv("mvi_token_fully_diluted_07_07_2021.csv")
 
