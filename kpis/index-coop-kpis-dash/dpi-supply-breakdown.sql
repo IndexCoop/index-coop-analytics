@@ -1,4 +1,4 @@
--- https://duneanalytics.com/queries/27649/56531
+-- https://duneanalytics.com/queries/78294
 
 -- DPI/ETH LP Staking Contract (INDEX rewards) --> \xB93b505Ed567982E2b6756177ddD23ab5745f309
 -- DPI/ETH LP Token / Pool Address --> \x4d5ef58aac27d99935e5b6b4a6778ff292059991
@@ -6,7 +6,170 @@
 -- DPI/ETH Sushi LP Token / Pool Address --> \x34b13f8cd184f55d0bd4dd1fe6c07d46f245c7ed
 -- DPI/ETH Sushi LP Staking Contract --> \xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd
 
-WITH dpi_uniswap_pairs AS (
+WITH dpi_uniswap_v3_supply AS (
+    
+    WITH  pool as (
+    select
+                pool,
+                token0,
+                token1
+    from        uniswap_v3."Factory_evt_PoolCreated" 
+
+    where       token0 = '\x1494ca1f11d487c2bbe4543e90080aeba4ba3c2b'
+    or          token1 = '\x1494ca1f11d487c2bbe4543e90080aeba4ba3c2b'
+    )
+
+    , tokens as (
+    select      * 
+    from        erc20."tokens"
+    )
+
+    -- Liquidity added to the pool
+    , mint as (
+    select      *
+    from        uniswap_v3."Pair_evt_Mint" a
+    inner join  pool
+    on          pool.pool = a.contract_address
+    )
+
+    -- Liquidity removed from the pool
+    , burn as (
+    select      *
+    from        uniswap_v3."Pair_evt_Burn" a
+    inner join  pool
+    on          pool.pool = a.contract_address
+    )
+
+    -- Swaps
+    , swap as (
+    select      * 
+    from        uniswap_v3."Pair_evt_Swap" a
+    inner join  pool
+    on          pool.pool = a.contract_address
+    )
+
+    -- Aggregating data to evt_block_time level so duplicates due to activity at the same evt_block_time are avoided
+    , mint_agg as (
+    select
+                evt_block_time,
+                pool,
+                sum(amount0) as mint0,
+                sum(amount1) as mint1
+    from        mint
+    group by    1,2
+    )
+
+    , burn_agg as (
+    select
+                evt_block_time,
+                pool,
+                sum(amount0) as burn0,
+                sum(amount1) as burn1
+    from        burn
+    group by    1,2
+    )
+
+    , swap_agg as (
+    select      
+                evt_block_time,
+                pool,
+                sum(amount0) as swap0,
+                sum(amount1) as swap1
+
+    from        swap
+    group by    1,2
+    )
+
+    , mint_burn_swap as (
+    select      
+                evt_block_time,
+                pool,
+                mint0 as amount0,
+                mint1 as amount1
+    from        mint_agg
+    
+    union all
+    
+    select      
+                evt_block_time,
+                pool,
+                (burn0 * -1) as amount0,
+                (burn1 * -1) as amount1
+    from        burn_agg
+    
+    union all
+    
+    select      
+                evt_block_time,
+                pool,
+                swap0 as amount0,
+                swap1 as amount1
+    from        swap_agg
+    )
+
+    , amounts as (
+    select
+                evt_block_time,
+                pool,
+                sum(amount0) as amount0,
+                sum(amount1) as amount1
+    from        mint_burn_swap
+    group by    1,2
+    )
+
+    -- Final dataset at evt_block_time periodicity and including extra descriptive columns
+    , cumsum_amounts as (
+    select
+                a.*,
+                (sum(amount0) over(partition by a.pool order by evt_block_time))/10^t0.decimals as reserve0,
+                (sum(amount1) over(partition by a.pool order by evt_block_time))/10^t1.decimals as reserve1,
+                t0.symbol as token0,
+                t1.symbol as token1
+                
+    from        amounts a
+
+    inner join  pool
+    on          pool.pool = a.pool
+
+    inner join  tokens t0
+    on          t0.contract_address = pool.token0
+
+    inner join  tokens t1
+    on          t1.contract_address = pool.token1
+    )
+    
+    -- Average daily reserves of DPI per pool
+    , avg_reserves_pool as (
+    select
+                date_trunc('day', evt_block_time) as dt,
+                pool,
+                token0,
+                token1,
+                avg(reserve0) as reserve0,
+                avg(reserve1) as reserve1
+                
+    from        cumsum_amounts
+
+    group by    1,2,3,4
+    )
+    
+    select
+                sum(case 
+                        when token0 = 'DPI' then reserve0
+                        when token1 = 'DPI' then reserve1
+                    end) as reserves,
+                dt,
+                'DPI' AS product,
+                'uniswap_v3' AS project
+
+    from        avg_reserves_pool
+
+    group by    2,3,4
+),
+
+
+
+dpi_uniswap_pairs AS (
 
   SELECT
     token0,
@@ -125,6 +288,9 @@ dpi_balancer_supply AS (
 ),
 
 dpi_liquidity_supply_temp AS (
+SELECT dt, reserves FROM dpi_uniswap_v3_supply
+
+UNION ALL
 
 SELECT dt, reserves FROM dpi_uniswap_supply
 
