@@ -20,19 +20,26 @@
 */
 
 -- Start Generalized Price Feed block - see generalized_price_feed.sql
-
-WITH prices_usd AS (
-
-    SELECT
-        date_trunc('day', minute) AS dt
+-- Modified price feed using EOD prices
+with prices_by_minute as (
+SELECT
+        minute
         , symbol
         , decimals
-        , AVG(price) AS price
+        , price
+        , row_number() over (partition by symbol, date_trunc('day', minute) order by minute desc) as row_num
+        
     FROM prices.usd
     WHERE symbol in ('INDEX', 'DPI', 'MVI', 'ETH2x-FLI', 'BTC2x-FLI', 'USDC')
-    GROUP BY 1,2,3
 )
-    
+, prices_usd as (
+    select date_trunc('day', minute) as dt
+        , symbol
+        , decimals
+        , price -- Closing price at EOD UTC
+    from prices_by_minute
+    where row_num = 1
+)
 , eth_swaps AS (
     -- Uniswap price feed
     SELECT
@@ -131,21 +138,27 @@ WITH prices_usd AS (
         -- , (ARRAY_REMOVE(ARRAY_AGG(asset_price) OVER (PARTITION BY symbol ORDER BY hour), NULL))[COUNT(asset_price) OVER (PARTITION BY symbol ORDER BY hour)] AS asset_price
     FROM swap_temp
 )
+, swap_price_feed_hour as (
+    select hour
+        , u.symbol
+        , usd_price as price
+        , row_number() over (partition by u.symbol, date_trunc('day', hour) order by hour desc) as row_num
+    from swap_feed u
+    left join prices_usd p on date_trunc('day', u.hour) = p.dt
+        and u.symbol = p.symbol
+    where p.dt is null
+    and usd_price is not null
+)
 , swap_price_feed AS ( -- only include the uni feed when there's no corresponding price in prices_usd
 
     SELECT
         date_trunc('day', hour) AS dt
-        , u.symbol
-        , AVG(usd_price) AS price
-    FROM swap_feed u
-    left join prices_usd p on date_trunc('day', u.hour) = p.dt
-        and u.symbol = p.symbol
-    WHERE p.dt is null
-        AND usd_price IS NOT NULL
-    GROUP BY 1, 2
+        , symbol
+        , price
+    FROM swap_price_feed_hour
+    where row_num = 1
 
 ),
-
 prices AS (
 
 SELECT
