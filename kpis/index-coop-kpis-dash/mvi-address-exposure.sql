@@ -1,4 +1,4 @@
--- https://duneanalytics.com/queries/30327
+-- https://duneanalytics.com/queries/80151
 
 WITH mvi_transfers AS (
 
@@ -141,6 +141,68 @@ mvi_uniswap_remove AS (
 
 ),
 
+uniswapv3_pool as (
+  select
+              pool,
+              token0,
+              tok0.symbol as symbol0,
+              tok0.decimals as decimals0,
+              token1,
+              tok1.symbol as symbol1,
+              tok1.decimals as decimals1
+
+  from        uniswap_v3."Factory_evt_PoolCreated" pool
+  
+  inner join  erc20."tokens" tok0 
+  on          pool.token0 = tok0.contract_address
+  
+  inner join  erc20."tokens" tok1 
+  on          pool.token1 = tok1.contract_address
+
+  where       token0 = '\x72e364f2abdc788b7e918bc238b21f109cd634d7'
+  or          token1 = '\x72e364f2abdc788b7e918bc238b21f109cd634d7'
+),
+
+uniswapv3_add as (
+
+SELECT
+	"from" as address,
+	case 
+    when symbol0 = 'MVI' then amount0 / (10^decimals0) 
+    when symbol1 = 'MVI' then amount1 / (10^decimals1) 
+  end as amount,
+	date_trunc('day', block_time) AS evt_block_day,
+	'uniswapv3_add' as type,
+	hash as evt_tx_hash
+	
+	FROM uniswap_v3."Pair_evt_Mint" m
+  INNER JOIN uniswapv3_pool p
+  on p.pool = m.contract_address
+	LEFT JOIN ethereum."transactions" tx ON m.evt_tx_hash = tx.hash
+	WHERE tx.block_time > '5/4/21'
+	
+),
+
+
+uniswapv3_remove as (
+
+SELECT
+	"from" as address,
+	case 
+    when symbol0 = 'MVI' then -amount0 / (10^decimals0) 
+    when symbol1 = 'MVI' then -amount1 / (10^decimals1) 
+  end as amount,
+	date_trunc('day', block_time) AS evt_block_day,
+	'uniswapv3_remove' as type,
+	hash as evt_tx_hash
+	
+	FROM uniswap_v3."Pair_evt_Burn" m
+  INNER JOIN uniswapv3_pool p
+  on p.pool = m.contract_address
+	LEFT JOIN ethereum."transactions" tx ON m.evt_tx_hash = tx.hash
+	WHERE tx.block_time > '5/4/21'
+),
+
 mvi_lp AS (
 
 SELECT * FROM mvi_uniswap_add
@@ -148,6 +210,14 @@ SELECT * FROM mvi_uniswap_add
 UNION ALL
 
 SELECT * FROM mvi_uniswap_remove
+
+union all
+
+select * from uniswapv3_add
+
+union all
+
+select * from uniswapv3_remove
 
 ),
 
@@ -203,7 +273,8 @@ mvi_exposure AS (
     LEFT JOIN mvi_contracts c ON m.address = c.address
     WHERE c.type IS NULL
       AND m.type IN ('mint', 'burn', 'transfer',
-      'uniswap_add', 'uniswap_remove')
+      'uniswap_add', 'uniswap_remove',
+	    'uniswapv3_add', 'uniswapv3_remove')
     GROUP BY 1, 2
     ORDER BY 1, 2
 
