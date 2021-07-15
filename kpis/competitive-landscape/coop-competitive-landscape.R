@@ -1,6 +1,10 @@
 library(httr)
 library(tidyverse)
 library(lubridate)
+library(dplyr)
+library(zoo)
+library(reshape2)
+library(tidyr)
 
 # set scientific notation option
 options(scipen = 99)
@@ -49,7 +53,7 @@ index <- as_tibble(index)
 
 # API Time
 for(i in 1:nrow(index)) {
-
+  
   # call coingecko and process results
   str <- paste0('https://api.coingecko.com/api/v3/coins/', index$product[i], '/market_chart?vs_currency=usd&days=max') 
   r <- GET(str)
@@ -84,30 +88,53 @@ for(i in 1:nrow(index)) {
 }
 
 # data frame by project/product/date
+# mutate and complete create NAs for the dates that the API isn't pulling data correctly
 product_mcaps <- final %>%
   group_by(project, symbol, date) %>%
-  summarize(market_cap = mean(market_cap))
+  summarize(market_cap = mean(market_cap))%>%
+  mutate(Date = as.Date(date)) %>%
+  complete(date = seq.Date(min(date), max(date), by="day"))
+
+#the extra date column and the project column were messing the whole thing up, get them outta here for now
+product_mcaps$Date = NULL
+product_mcaps$project = NULL
+
+#spread it out by product, then fill in NA with last available data
+product_mcaps_formatted <- product_mcaps %>%
+  spread(key = symbol, value = "market_cap") %>%
+  na.locf(na.rm = FALSE)
+
+
+product_mcaps_formatted2 <- product_mcaps_formatted %>%
+  gather(key = "symbol", value = "market_cap",
+  c(-"date"))
+
+product_mcaps_formatted3 <- merge(index, product_mcaps_formatted2, by = "symbol")
+
+product_mcaps_formatted3 <- product_mcaps_formatted3[order(product_mcaps_formatted3$date),]
 
 #data frame by project/date
-project_mcaps <- product_mcaps %>%
+project_mcaps <- product_mcaps_formatted3 %>%
   group_by(project, date) %>%
-  summarize(market_cap = sum(market_cap))
+  summarize(market_cap = sum(market_cap, na.rm = TRUE)) 
 
+#sum up the each project's mcap each day
 project_mcaps_formatted <- project_mcaps %>%
   spread(key = project, value = market_cap) %>%
   replace(is.na(.), 0)
 
+#convert data back to long format
+project_mcaps_formatted2_long <- melt(project_mcaps_formatted, id = "date")
+
 # quick visual of project AUM
-# project_mcaps %>%
-#   ggplot(aes(x = date, y = market_cap, color = project)) +
-#   geom_line() +
-#   scale_y_continuous(name = "Market Cap", labels = scales::comma) +
-#   scale_x_date(name = "") +
-#   theme_bw()
+project_mcaps_formatted2_long %>%
+  ggplot(aes(x = date, y = value, color = variable)) +
+  geom_line() +
+  scale_y_continuous(name = "Market Cap", labels = scales::comma) +
+  scale_x_date(name = "") +
+  theme_bw()
 
 # write .csvs
 # write_csv(product_mcaps, 'index-coop-competitive-landscape-product-mcaps-2021_06_07.csv')
 # write_csv(project_mcaps, 'index-coop-competitive-landscape-project-mcaps-2021_06_07.csv')
-write_csv(project_mcaps_formatted, 'index-coop-competitive-landscape-project-mcaps-2021_06_07.csv')
-
-
+write_csv(project_mcaps_formatted2, 'index-coop-competitive-landscape-project-mcaps-2021_06_07.csv')
