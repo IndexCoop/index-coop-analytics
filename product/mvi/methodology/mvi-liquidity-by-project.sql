@@ -13,12 +13,10 @@ WITH uniswap_pairs AS (
   FROM uniswap_v2."Factory_evt_PairCreated" pairsraw
   LEFT JOIN erc20.tokens erc20 ON pairsraw.token0 = erc20.contract_address
   LEFT JOIN erc20.tokens erc202 ON pairsraw.token1 = erc202.contract_address
-  WHERE erc20.symbol IN ('MANA', 'ENJ', 'UOS', 'SAND', 'AXS', 'WHALE', 'NFTX', 
-  'AUDIO', 'RFOX', 'GHST', 'REVV', 'RARI', 'MEME', 'TVK', 'DG', 'SHROOM',
-  'CHAIN', 'FNT', 'GALA', 'MUSE', 'SOUL', 'SLP', 'ABYSS', 'WAXE', 'CHZ') OR
-    erc202.symbol IN ('MANA', 'ENJ', 'UOS', 'SAND', 'AXS', 'WHALE', 'NFTX', 
-    'AUDIO', 'RFOX', 'GHST', 'REVV', 'RARI', 'MEME', 'TVK', 'DG', 'SHROOM',
-  'CHAIN', 'FNT', 'GALA', 'MUSE', 'SOUL', 'SLP', 'ABYSS', 'WAXE', 'CHZ')
+  WHERE erc20.symbol IN ('MANA', 'ENJ', 'SAND', 'AXS', 'WHALE', 'NFTX', 
+  'AUDIO', 'RFOX', 'REVV', 'RARI', 'MEME', 'TVK', '$DG', 'GALA', 'MUSE', 'WAXE', 'CHZ', 'ERN', 'ILV') OR
+    erc202.symbol IN ('MANA', 'ENJ', 'SAND', 'AXS', 'WHALE', 'NFTX', 
+  'AUDIO', 'RFOX', 'REVV', 'RARI', 'MEME', 'TVK', '$DG', 'GALA', 'MUSE', 'WAXE', 'CHZ', 'ERN', 'ILV')
   
 ),
 
@@ -31,6 +29,7 @@ uniswap_reserves AS (
     date_trunc('day', evt_block_time) AS dt
   FROM uniswap_v2."Pair_evt_Sync" sync
   WHERE contract_address IN (SELECT DISTINCT pair FROM uniswap_pairs)
+    AND date_trunc('day', evt_block_time) > (NOW() - interval '90' day)
   GROUP BY 3, 4
 
 ),
@@ -113,9 +112,8 @@ SELECT
     'uniswap' AS project,
     SUM(liquidity) AS liquidity
 FROM uniswap_token_liquidity
-WHERE symbol IN ('MANA', 'ENJ', 'UOS', 'SAND', 'AXS', 'WHALE', 'NFTX', 
-    'AUDIO', 'RFOX', 'GHST', 'REVV', 'RARI', 'MEME', 'TVK', 'DG', 'SHROOM',
-  'CHAIN', 'FNT', 'GALA', 'MUSE', 'SOUL', 'SLP', 'ABYSS', 'WAXE', 'CHZ')
+WHERE symbol IN ('MANA', 'ENJ', 'SAND', 'AXS', 'WHALE', 'NFTX', 
+  'AUDIO', 'RFOX', 'REVV', 'RARI', 'MEME', 'TVK', '$DG', 'GALA', 'MUSE', 'WAXE', 'CHZ', 'ERN', 'ILV')
 GROUP BY 1, 2, 3
 ORDER BY 2, 1
 
@@ -134,12 +132,10 @@ sushiswap_pairs AS (
   FROM sushi."Factory_evt_PairCreated" pairsraw
   LEFT JOIN erc20.tokens erc20 ON pairsraw.token0 = erc20.contract_address
   LEFT JOIN erc20.tokens erc202 ON pairsraw.token1 = erc202.contract_address
-  WHERE erc20.symbol IN ('MANA', 'ENJ', 'UOS', 'SAND', 'AXS', 'WHALE', 'NFTX', 
-  'AUDIO', 'RFOX', 'GHST', 'REVV', 'RARI', 'MEME', 'TVK', 'DG', 'SHROOM',
-  'CHAIN', 'FNT', 'GALA', 'MUSE', 'SOUL', 'SLP', 'ABYSS', 'WAXE', 'CHZ') OR
-    erc202.symbol IN ('MANA', 'ENJ', 'UOS', 'SAND', 'AXS', 'WHALE', 'NFTX', 
-    'AUDIO', 'RFOX', 'GHST', 'REVV', 'RARI', 'MEME', 'TVK', 'DG', 'SHROOM',
-  'CHAIN', 'FNT', 'GALA', 'MUSE', 'SOUL', 'SLP', 'ABYSS', 'WAXE', 'CHZ')
+  WHERE erc20.symbol IN ('MANA', 'ENJ', 'SAND', 'AXS', 'WHALE', 'NFTX', 
+  'AUDIO', 'RFOX', 'REVV', 'RARI', 'MEME', 'TVK', '$DG', 'GALA', 'MUSE', 'WAXE', 'CHZ', 'ERN', 'ILV') OR
+    erc202.symbol IN ('MANA', 'ENJ', 'SAND', 'AXS', 'WHALE', 'NFTX', 
+  'AUDIO', 'RFOX', 'REVV', 'RARI', 'MEME', 'TVK', '$DG', 'GALA', 'MUSE', 'WAXE', 'CHZ', 'ERN', 'ILV')
   
 ),
 
@@ -152,6 +148,7 @@ sushiswap_reserves AS (
     date_trunc('day', evt_block_time) AS dt
   FROM sushi."Pair_evt_Sync" sync
   WHERE contract_address IN (SELECT DISTINCT pair FROM sushiswap_pairs)
+    AND date_trunc('day', evt_block_time) > (NOW() - interval '90' day)
   GROUP BY 3, 4
 
 ),
@@ -234,9 +231,8 @@ SELECT
     'sushiswap' AS project,
     SUM(liquidity) AS liquidity
 FROM sushiswap_token_liquidity
-WHERE symbol IN ('MANA', 'ENJ', 'UOS', 'SAND', 'AXS', 'WHALE', 'NFTX', 
-    'AUDIO', 'RFOX', 'GHST', 'REVV', 'RARI', 'MEME', 'TVK', 'DG', 'SHROOM',
-  'CHAIN', 'FNT', 'GALA', 'MUSE', 'SOUL', 'SLP', 'ABYSS', 'WAXE', 'CHZ')
+WHERE symbol IN ('MANA', 'ENJ', 'SAND', 'AXS', 'WHALE', 'NFTX', 
+  'AUDIO', 'RFOX', 'REVV', 'RARI', 'MEME', 'TVK', '$DG', 'GALA', 'MUSE', 'WAXE', 'CHZ', 'ERN', 'ILV')
 GROUP BY 1, 2, 3
 ORDER BY 2, 1
 
@@ -260,38 +256,26 @@ LEFT JOIN prices.usd p ON a.token = p.contract_address
 WHERE token IN (
 '\x0f5d2fb29fb7d3cfee444a200298f468908cc942',
 '\xf629cbd94d3791c9250152bd8dfbdf380e2a3b9c',
-'\xd13c7342e1ef687c5ad21b27c2b65d772cab5c8c',
 '\x3845badAde8e6dFF049820680d1F14bD3903a5d0',
-'\xF5D669627376EBd411E34b98F19C868c8ABA5ADA',
+'\xbb0e17ef65f82ab018d8edd776e8dd940327b28b',
 '\x9355372396e3F6daF13359B7b607a3374cc638e0',
 '\x87d73E916D7057945c9BcD8cdd94e42A6F47f776',
 '\x18aAA7115705e8be94bfFEBDE57Af9BFc265B998',
 '\xa1d6df714f91debf4e0802a542e13067f31b8262',
-'\x3F382DbD960E3a9bbCeaE22651E88158d2791550',
 '\x557B933a7C2c45672B610F8954A3deB39a51A8Ca',
 '\xfca59cd816ab1ead66534d82bc21e7515ce441cf',
 '\xD5525D397898e5502075Ea5E830d8914f6F0affe',
 '\xd084b83c305dafd76ae3e1b4e1f1fe2ecccb3988',
-'\xee06a81a695750e71a662b51066f2c74cf4478a0',
-'\xed0439eacf4c4965ae4613d77a5c2efe10e5f183',
-'\xC4C2614E694cF534D407Ee49F8E44D125E4681c4',
-'\xdc5864ede28bd4405aa04d93e05a0531797d9d59',
+'\xEE06A81a695750E71a662B51066F2c74CF4478a0',
 '\x15D4c048F83bd7e37d49eA4C83a07267Ec4203dA',
 '\xb6ca7399b4f9ca56fc27cbff44f4d2e4eef1fc81',
-'\x79C75E2e8720B39e258F41c37cC4f309E0b0fF80',
-'\x37236cd05b34cc79d3715af2383e96dd7443dcf1',
-'\x0e8d6b471e332f140e7d9dbb99e5e3822f728da6',
 '\x7a2Bc711E19ba6aff6cE8246C546E8c4B4944DFD',
-'\x3506424f91fd33084466f402d5d97f05f8e3b4af'
+'\x3506424f91fd33084466f402d5d97f05f8e3b4af',
+'\xbbc2ae13b23d715c30720f079fcd9b4a74093505',
+'\x767fe9edc9e0df98e07454847909b5e959d7ca0e'
 )
-    AND pool IN (
-    '\x5a21e141ca90e46a2ee54f93b54a1bec608c307b',
-    '\x814c01ecb99b090cae15adfe662d949b3244c51c',
-    '\x83218d02abb6acdfd4c972e9c8b13754bc2e23d0',
-    '\x83218d02abb6acdfd4c972e9c8b13754bc2e23d0',
-    '\x7f8616a9f6916376f2ef066e79ddd93bea6b475b'
-    )
     AND cumulative_amount / 10^erc20.decimals * p.price IS NOT NULL
+    AND day > (NOW() - interval '90' day)
 
 ),
 
@@ -331,4 +315,5 @@ uni_sushi_balancer AS (
 SELECT
     *
 FROM uni_sushi_balancer
+WHERE token != '\x53c8395465a84955c95159814461466053dedede'
 ORDER BY symbol, project, dt
