@@ -1,45 +1,26 @@
-/*
-    This should be identical to USD Treasury Balance 1
-    with the query here: https://duneanalytics.com/queries/44939
+-- query link: https://duneanalytics.com/queries/71179
+-- Query to estimate how much of the Index USD price is represented by assets on hand in the treasury
+-- The assets included:
+--      * DPI
+--      * USDC
 
-    Except that it takes a different "end_date" parameter.
-    The point of this is to show balances on two different days.
-    Query for this one here: https://duneanalytics.com/queries/66423
-
-    forked from https://duneanalytics.com/queries/22041/46378
-
-    --- INDEX Treasury ---
-
-    Wallet / Address
-    ('\x9467cfadc9de245010df95ec6a585a506a8ad5fc', -- Treasury Wallet
-    '\xe2250424378b6a6dC912f5714cfd308a8D593986', -- Treasury Committee Wallet
-    '\x26e316f5b3819264DF013Ccf47989Fb8C891b088' -- Community Treasury Year 1 Vesting
-    )    
-    
-
-*/
+-- For "Circulating Supply", we exclude the INDEX that's locked 
+-- in the Community, Set, and Defi Pulse vesting schedules
 
 -- Start Generalized Price Feed block - see generalized_price_feed.sql
--- Modified price feed using EOD prices
-with prices_by_minute as (
-SELECT
-        minute
+
+WITH prices_usd AS (
+
+    SELECT
+        date_trunc('day', minute) AS dt
         , symbol
         , decimals
-        , price
-        , row_number() over (partition by symbol, date_trunc('day', minute) order by minute desc) as row_num
-        
+        , AVG(price) AS price
     FROM prices.usd
     WHERE symbol in ('INDEX', 'DPI', 'MVI', 'ETH2x-FLI', 'BTC2x-FLI', 'USDC')
+    GROUP BY 1,2,3
 )
-, prices_usd as (
-    select date_trunc('day', minute) as dt
-        , symbol
-        , decimals
-        , price -- Closing price at EOD UTC
-    from prices_by_minute
-    where row_num = 1
-)
+    
 , eth_swaps AS (
     -- Uniswap price feed
     SELECT
@@ -138,27 +119,21 @@ SELECT
         -- , (ARRAY_REMOVE(ARRAY_AGG(asset_price) OVER (PARTITION BY symbol ORDER BY hour), NULL))[COUNT(asset_price) OVER (PARTITION BY symbol ORDER BY hour)] AS asset_price
     FROM swap_temp
 )
-, swap_price_feed_hour as (
-    select hour
-        , u.symbol
-        , usd_price as price
-        , row_number() over (partition by u.symbol, date_trunc('day', hour) order by hour desc) as row_num
-    from swap_feed u
-    left join prices_usd p on date_trunc('day', u.hour) = p.dt
-        and u.symbol = p.symbol
-    where p.dt is null
-    and usd_price is not null
-)
 , swap_price_feed AS ( -- only include the uni feed when there's no corresponding price in prices_usd
 
     SELECT
         date_trunc('day', hour) AS dt
-        , symbol
-        , price
-    FROM swap_price_feed_hour
-    where row_num = 1
+        , u.symbol
+        , AVG(usd_price) AS price
+    FROM swap_feed u
+    left join prices_usd p on date_trunc('day', u.hour) = p.dt
+        and u.symbol = p.symbol
+    WHERE p.dt is null
+        AND usd_price IS NOT NULL
+    GROUP BY 1, 2
 
 ),
+
 prices AS (
 
 SELECT
@@ -176,18 +151,35 @@ FROM swap_price_feed
 )
 -- End price feed block - output is CTE "prices"
 , wallets AS (
-    SELECT 'INDEX' AS org
-        , '\x9467cfadc9de245010df95ec6a585a506a8ad5fc'::bytea AS address
-        , 'Treasury Wallet' AS wallet
-    /*UNION
-    SELECT 'INDEX' AS org
-        , '\xe2250424378b6a6dC912f5714cfd308a8D593986'::bytea AS address
-        , 'Treasury Committee' AS wallet
-    union
-    select 'INDEX' AS org
-    , '\x26e316f5b3819264DF013Ccf47989Fb8C891b088'::bytea AS address
-    , 'Community Treasury Year 1 Vesting' AS wallet
-    */
+    select '\x9467cfadc9de245010df95ec6a585a506a8ad5fc'::bytea AS address
+    , 'Treasury Wallet' AS address_alias
+    union all
+        select '\x26e316f5b3819264DF013Ccf47989Fb8C891b088'::bytea as address
+        , 'Community Treasury Year 1 Vesting' as address_alias
+    union all
+    select '\xd89C642e52bD9c72bCC0778bCf4dE307cc48e75A'::bytea as address
+        , 'Community Treasury Year 2 Vesting' as address_alias
+    union all
+    select '\x71F2b246F270c6AF49e2e514cA9F362B491Fbbe1'::bytea as address
+        , 'Community Treasury Year 3 Vesting' as address_alias
+    union all
+    select '\xf64d061106054Fe63B0Aca68916266182E77e9bc'::bytea as address
+        , 'Set Labs Year 1 Vesting' as address_alias
+    union all
+    select '\x4c11dfd35a4fe079b41d5d9729ed34c00d487712'::bytea as address
+        , 'Set Labs Year 2 Vesting' as address_alias
+    union all
+    select '\x0D627ca04A97219F182DaB0Dc2a23FB4a5B02A9D'::bytea as address
+        , 'Set Labs Year 3 Vesting' as address_alias
+    union all
+    select '\x5c29aa6761803bcfda7f683eaa0ff9bddda3649d'::bytea as address
+        , 'Defi Pulse Year 1 Vesting' as address_alias
+    union all
+    select '\xce3c6312385fcf233ab0de574b0cb1a588566c3f'::bytea as address
+        , 'Defi Pulse Year 2 Vesting' as address_alias
+    union all
+    select '\x0f58793e8cf39d6b60919ffaf773a7f95a568146'::bytea as address
+        , 'Defi Pulse Year 3 Vesting' as address_alias
 )
 
 , creation_days AS (
@@ -258,19 +250,19 @@ FROM swap_price_feed
 , balances_all_days AS (
     SELECT
         d.day,
---        b.address,
+        b.address,
         b.contract_address,
         sum(b.balance) AS "balance"
     FROM balances_w_gap_days b
     INNER JOIN days d ON b.day <= d.day AND d.day < b.next_day
-    GROUP BY 1,2 --,3
-    ORDER BY 1,2 --,3
+    GROUP BY 1,2,3
+    ORDER BY 1,2,3
 )
 , usd_value_all_days as (
     SELECT
         b.day,
     --    b.address,
-    --    w.wallet,
+        w.address_alias,
     --    w.org,
         b.contract_address,
         p.symbol AS token,
@@ -280,16 +272,66 @@ FROM swap_price_feed
         , rank() over (order by b.day desc)
     FROM balances_all_days b
     left join erc20.tokens t on b.contract_address = t.contract_address
-    LEFT OUTER JOIN prices p ON t.symbol = p.symbol AND b.day = p.dt
-    -- LEFT OUTER JOIN wallets w ON b.address = w.address
-    where b.day <= '{{ end_date_2 }}'
-    ORDER BY usd_value DESC
-    LIMIT 10000
+    inner JOIN prices p ON t.symbol = p.symbol AND b.day = p.dt
+    LEFT OUTER JOIN wallets w ON b.address = w.address
+    where b.day <= '{{end_date}}'
 )
-select contract_address
+, current_balances as (
+select 
+    address_alias
     , token
     , balance
     , usd_value
+    , contract_address
 from usd_value_all_days
 where rank = 1
-;
+)
+, locked_index_supply as (
+    select sum(balance) as locked_index_supply
+    from current_balances
+    where address_alias in 
+        -- being explicit about which accounts count as "locked"
+        ('Community Treasury Year 1 Vesting'
+        , 'Community Treasury Year 2 Vesting'
+        , 'Community Treasury Year 3 Vesting'
+        , 'Set Labs Year 1 Vesting' 
+        , 'Set Labs Year 2 Vesting' 
+        , 'Set Labs Year 3 Vesting' 
+        , 'Defi Pulse Year 1 Vesting'
+        , 'Defi Pulse Year 2 Vesting'
+        , 'Defi Pulse Year 3 Vesting'
+        )
+)
+, treasury_wallet_value as (
+    select sum(case when token = 'DPI' then usd_value else 0 end) as dpi_usd_value
+        , sum(case when token = 'USDC' then usd_value else 0 end) as usdc_usd_value
+    from current_balances
+    where address_alias = 'Treasury Wallet'
+)
+, index_mint_events as (
+                SELECT t.symbol, e.*,       
+                CASE WHEN "from" = '\x0000000000000000000000000000000000000000' THEN (value*1.0/10^decimals) ELSE 0 END AS minted,
+                CASE WHEN "to"   = '\x0000000000000000000000000000000000000000' THEN (value*1.0/10^decimals) ELSE 0 END AS burned
+                FROM erc20."ERC20_evt_Transfer" e
+                left join erc20.tokens t on t.contract_address = e.contract_address
+                WHERE e.contract_address = '\x0954906da0Bf32d5479e25f46056d22f08464cab'
+                and not ("from" = '\x0000000000000000000000000000000000000000'
+                        and "to"   = '\x0000000000000000000000000000000000000000')
+                and ("from" = '\x0000000000000000000000000000000000000000'
+                        or "to"   = '\x0000000000000000000000000000000000000000')
+)
+, index_total_supply as (
+    select sum(minted) - sum(burned) as total_index_supply
+    from index_mint_events
+)
+select dpi_usd_value
+    , usdc_usd_value
+    , total_index_supply
+    , locked_index_supply
+    , total_index_supply - locked_index_supply as circulating_supply
+    , (dpi_usd_value + usdc_usd_value) / total_index_supply as usd_per_total_supply
+    , (dpi_usd_value + usdc_usd_value) / (total_index_supply - locked_index_supply) as usd_per_circ_supply
+from index_total_supply 
+join locked_index_supply on 1=1 
+join treasury_wallet_value on 1=1
+
