@@ -149,4 +149,4 @@ left join lp_univ2 lu
 on lc.day = lu.day
 left join mvi_eth_lp_price melp
 on lc.day = melp.day
-where lc.day >= '2021-04-07 00:00' -- date of MVI officially lauch
+where lc.day >= '2021-04-07 00:00' -- date of MVI officially launch
