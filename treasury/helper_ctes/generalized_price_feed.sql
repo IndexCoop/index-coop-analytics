@@ -124,7 +124,7 @@ WITH prices_usd AS (
 
     SELECT
         date_trunc('day', hour) AS dt
-        , symbol
+        , u.symbol
         , AVG(usd_price) AS price
     FROM swap_feed u
     left join prices_usd p on date_trunc('day', u.hour) = p.dt
@@ -144,7 +144,7 @@ FROM prices_usd
 UNION ALL
 
 SELECT dt  
-    , u.symbol
+    , symbol
     , 18 as decimals -- all the INDEX tokens have 18 decimals
     , price
 FROM swap_price_feed
