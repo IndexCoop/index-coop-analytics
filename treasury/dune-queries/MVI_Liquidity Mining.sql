@@ -1,51 +1,40 @@
 /*
 https://duneanalytics.com/queries/82789
 
+Wallet / Address
+'\x5bc4249641b4bf4e37ef513f3fa5c63ecab34881' - MVI|ETH LP Staking Contract
+'\x4d3c5db2c68f6859e0cd05d080979f597dd64bff' - MVI|ETH LP Token 
+'\x0954906da0Bf32d5479e25f46056d22f08464cab' - INDEX Token
+
 */
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-with first_day as (
+with current_day as (
 select 
  ROW_NUMBER() OVER (ORDER BY day) AS rows,
- "day",
+ "day" as day,
 "amount_raw"/1e18 as amount
 from erc20."view_token_balances_daily"
 where "wallet_address" = '\x5bc4249641b4bf4e37ef513f3fa5c63ecab34881'
 and token_address = '\x4d3c5db2c68f6859e0cd05d080979f597dd64bff'
-limit 300
+limit 360
 ),
 
-second_day as (
+prev_day as (
 select 
-1+ROW_NUMBER() OVER (ORDER BY day) AS rows2,
- "day" as day2,
-"amount_raw"/1e18 as amount2
+1+ROW_NUMBER() OVER (ORDER BY day) AS rows,
+ "day" as day,
+"amount_raw"/1e18 as amount
 from erc20."view_token_balances_daily"
 where "wallet_address" = '\x5bc4249641b4bf4e37ef513f3fa5c63ecab34881'
 and token_address = '\x4d3c5db2c68f6859e0cd05d080979f597dd64bff'
-limit 300
+limit 360
 ),
 
 stake_contract as (
 select --*, amount as "MVI|ETH LP", amount-amount2 as change
-day, amount as "MVI|ETH LP", amount-amount2 as change
-from first_day f left join second_day s
-on f.rows = s.rows2
+c.day, c.amount as "MVI|ETH LP", c.amount-p.amount as change
+from current_day c left join prev_day p
+on c.rows = p.rows
 order by 1
 ),
 
@@ -54,7 +43,7 @@ SELECT
 date_trunc('day', minute) AS day,
 avg(price) as price
 FROM prices.usd
-WHERE minute >= '2021-04-06 00:00'
+WHERE minute >= '2021-04-06 00:00' -- Date when the 1st MVI|ETH LP staked on the staking contract
 and contract_address ='\x0954906da0Bf32d5479e25f46056d22f08464cab' 
 group by 1
 ),
@@ -64,7 +53,7 @@ SELECT
 date_trunc('day', minute) AS day,
 avg(price) as price
 FROM prices.usd
-WHERE minute >= '2021-04-06 00:00'
+WHERE minute >= '2021-04-06 00:00' --date when the 1st MVI|ETH LP staked on the staking contract
 and contract_address ='\xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2' 
 group by 1
 ),
@@ -130,7 +119,7 @@ order by 1
 mvi_eth_lp_price as (
 select lc.day,
 iwp."WETH Price"*(ru."ETH amount"*2) as univ2_tvl,
-(iwp."WETH Price"*(ru."ETH amount"*2))/lu.balance as mviethLP_price --1 LP Token in USD = Total Value of the Liquidity Poll/Circulating Supply of Tokens)
+(iwp."WETH Price"*(ru."ETH amount"*2))/lu.balance as mviethLP_price --1 LP Token in USD = (Total Value of the Liquidity Poll/Circulating Supply of Tokens)
 from stake_contract lc
 left join index_weth_price iwp
 on lc.day = iwp.day
@@ -146,7 +135,7 @@ select lc.day, lc."MVI|ETH LP" as "LP Staking Contract", lc.change, iwp."INDEX P
 ru."MVI amount" as "MVI in UNIv2",  
 ru."ETH amount" as "ETH in UNIv2",
 iwp."WETH Price"*(ru."ETH amount"*2) as univ2_tvl,
-lu.balance as "MIST|ETH at UNIv2",
+lu.balance as "MVI|ETH at UNIv2",
 -- INDEX rewards for MVI farm is 110 
 --(((iwp."INDEX Price"*110)/(iwp."WETH Price"*(ru."ETH amount"*2)))*365)*100 as apr
 ((iwp."INDEX Price"*110)/(lc."MVI|ETH LP"* melp.mviethLP_price)) * 365 * 100 as apr,
@@ -160,4 +149,4 @@ left join lp_univ2 lu
 on lc.day = lu.day
 left join mvi_eth_lp_price melp
 on lc.day = melp.day
-where lc.day >= '2021-04-07 00:00'
+where lc.day >= '2021-04-07 00:00' -- date of MVI officially lauch
