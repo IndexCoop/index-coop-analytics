@@ -73,15 +73,21 @@
     union all
     select '\xf64d061106054Fe63B0Aca68916266182E77e9bc'::bytea as address
         , 'Set Labs Year 1 Vesting' as address_alias
-    -- union all
-    -- select NULL as address -- need to look this up - on the website the address is invalid
-    --     , 'Set Labs Year 2 Vesting' as address_alias
+    union all
+    select '\x4c11dfd35a4fe079b41d5d9729ed34c00d487712'::bytea as address
+        , 'Set Labs Year 2 Vesting' as address_alias
     union all
     select '\x0D627ca04A97219F182DaB0Dc2a23FB4a5B02A9D'::bytea as address
         , 'Set Labs Year 3 Vesting' as address_alias
     union all
-    select '\x0D627ca04A97219F182DaB0Dc2a23FB4a5B02A9D'::bytea as address
-        , 'Set Labs Year 3 Vesting' as address_alias
+    select '\x5c29aa6761803bcfda7f683eaa0ff9bddda3649d'::bytea as address
+        , 'Defi Pulse Year 1 Vesting' as address_alias
+    union all
+    select '\xce3c6312385fcf233ab0de574b0cb1a588566c3f'::bytea as address
+        , 'Defi Pulse Year 2 Vesting' as address_alias
+    union all
+    select '\x0f58793e8cf39d6b60919ffaf773a7f95a568146'::bytea as address
+        , 'Defi Pulse Year 3 Vesting' as address_alias
     union all
     select '\x319b852cd28b1cbeb029a3017e787b98e62fd4e2'::bytea as address
         , 'January 2021 Merkle Rewards Account' as address_alias
