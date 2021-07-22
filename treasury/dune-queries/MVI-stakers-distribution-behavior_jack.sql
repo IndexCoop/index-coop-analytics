@@ -227,12 +227,15 @@ mvi_eth_lp_price as (
 
 , approximate_index_earned as (
     select address
+        , count(case when balance > 0 then 1 else null end) as num_days_earned
         , sum(index_reward) as total_index_rewards_earned
     from lp_daily_rewards
     group by 1
 )
 
-all_transfers as (
+-- TODO: get the most up to date LP balances by account
+
+, all_transfers as (
 SELECT  ls.address,  ls.amount as "Staked LP", lw.amount as "Withdrawn LP", ir.amount as "rewards", (ls.amount+lw.amount) as remaining -- ls.tx_hash, lw.tx_hash
 --lt.address, sum(it.index_amount) as index, sum(lt.lp_amount) as lp
 --lt.address, it.index_amount as index, lt.lp_amount as lp
@@ -243,16 +246,15 @@ left join index_reward_claimed ir
 on ls.address = ir.address
 GROUP BY 1,2,3,4,5
 order by 5 desc
-),
-
-farmers as(
+)
+, farmers as(
 select address, 
 "Staked LP", 
 coalesce("Withdrawn LP",0) as "Withdrawn LP",
 coalesce("rewards",0) as rewards,
 "Staked LP" + coalesce("Withdrawn LP",0)  as "Remaining LP"
 from all_transfers
-),
+)
 
 /*with_index as (
 select coalesce("amount",0) as amount,
@@ -263,7 +265,7 @@ and "token_symbol" = 'INDEX'
 limit 10000*/
 --),
 
-temp_table as (
+, temp_table as (
 select f.address, 
 f."Remaining LP", 
 f.rewards -- rewards claimed from Staking Contract
@@ -290,19 +292,19 @@ transfers as (
     
     
 select 
-tt.address, -- stakers address
-tt."Remaining LP", -- remaining lp token on staking contract
-tt.rewards,      -- rewards claimed
-aie.total_index_rewards_earned
-coalesce(t.amount,0) as amount_transferred,   -- amount swapped or transffered to another wallet
-case
-when t.amount is null then 'hodl'
-else 'spent'
-end as type
+tt.address -- stakers address
+, tt."Remaining LP" -- remaining lp token on staking contract
+, tt.rewards      -- rewards claimed
+, aie.num_days_earned -- number of days that they've earned rewards across
+, aie.total_index_rewards_earned
+, coalesce(t.amount,0) as amount_transferred   -- amount swapped or transffered to another wallet
+, case
+    when t.amount is null then 'hodl'
+    else 'spent'
+    end as type
 from temp_table tt
 left join transfers t
 on tt.address = t.address
 left join approximate_index_earned aie
 on tt.address = aie.address
-    
-    
+order by aie.total_index_rewards_earned desc
