@@ -75,7 +75,7 @@ transfers as (
 SELECT
     tr."to" AS address,
     sum(tr.value / 1e18) AS amount,
-    'swap/tranfer' AS type
+    'swap/transfer' AS type
 FROM erc20."ERC20_evt_Transfer" tr
 WHERE contract_address = '\x0954906da0Bf32d5479e25f46056d22f08464cab'
 and evt_block_time > '2021-04-06 00:00' --start date of MVI-ETH LP Staking contract
