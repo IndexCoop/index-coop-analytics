@@ -1,8 +1,6 @@
 WITH balances AS (
 SELECT date_trunc('hour', tb.timestamp) AS hour,
     sum(CASE WHEN token_address = '\x4ddc2d193948926d02f9b1fe9e1daa0718270ed5' THEN amount_raw / 1e8 END) AS ceth,
-    -- sum(CASE WHEN token_address = '\xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48' THEN amount_raw / 1e6 END) AS usdc,
-    -- sum(CASE WHEN token_address = '\xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2' THEN amount_raw / 1e18 END) AS weth,
     sum(CASE WHEN token_address = '\xc00e94cb662c3520282e6f5717214004a7f26888' THEN amount_raw / 1e18 END) AS comp
 FROM erc20.token_balances tb
 WHERE wallet_address = '\xAa6E8127831c9DE45ae56bB1b0d4D4Da6e5665BD'
