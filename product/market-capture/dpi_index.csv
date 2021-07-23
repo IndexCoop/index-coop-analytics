@@ -1,0 +1,18 @@
+asset_address,symbol,in_index_time,out_index_time,id,name
+\x408e41876cccdc0f92210600ef50372656052a38,ren,2020-09-10,2020-09-10,republic-protocol,REN
+\xbbbbca6a901c926f240b89eacb641d8aec7aeafd,lrc,2020-09-10,2020-09-10,loopring,Loopring
+\xc011a73ee8576fb46f5e1c5751ca3b9fe0af2a6f,snx,2020-09-10,2020-09-10,havven,Synthetix Network Token
+\xa0246c9032bc3a600820415ae600c6388619a14d,farm,2021-04-02,2021-04-02,harvest-finance,Harvest Finance
+\x9f8f72aa9304c8b593d555f12ef6589cc3a579a2,mkr,2020-09-10,2020-09-10,maker,Maker
+\x80fb784b7ed66730e8b1dbd9820afd29931aab03,lend,2020-09-10,2020-10-19,ethlend,Aave [OLD]
+\xa3bed4e1c75d00fa6f4e5e6922db7261b5e9acd2,mta,2021-02-01,2021-02-01,meta,mStable Governance Token: Meta
+\xdd974d5c2e2928dea5f71b9825b8b646686bd200,kncl,2020-09-10,2021-07-01,kyber-network,Kyber Network Crystal Legacy
+\x1f9840a85d5af5bf1d1762f925bdaddc4201f984,uni,2020-10-02,2020-10-02,uniswap,Uniswap
+\x221657776846890989a759ba2973e427dff5c9bb,rep,2020-09-10,2020-12-03,augur,Augur
+\x2ba592f78db6436527729929aaf6c908497cb200,cream,2021-04-02,2021-04-02,cream-2,Cream
+\xc00e94cb662c3520282e6f5717214004a7f26888,comp,2020-09-10,2020-09-10,compound-governance-token,Compound
+\x6b3595068778dd592e39a122f4f5a5cf09c90fe2,sushi,2021-03-02,2021-03-02,sushi,Sushi
+\x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9,aave,2020-10-19,2020-10-19,aave,Aave
+\xba100000625a3754423978a60c9317c58a424e3d,bal,2020-09-10,2020-09-10,balancer,Balancer
+\xdefa4e8a7bcba345f687a2f1456f5edd9ce97202,knc,2021-07-01,2021-07-01,kyber-network-crystal,Kyber Network Crystal
+\x0bc529c00c6401aef6d220be8c6ea1667f6ad93e,yfi,2020-09-10,2020-09-10,yearn-finance,yearn.finance
