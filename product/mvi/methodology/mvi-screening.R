@@ -64,4 +64,4 @@ out <- fin %>%
 
 View(out)
 
-write_csv(out, "mvi_token_screening_06_21_2021.csv")
+write_csv(out, "mvi_token_screening_07_23_2021.csv")

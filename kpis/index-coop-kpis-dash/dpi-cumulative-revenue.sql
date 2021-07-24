@@ -114,14 +114,17 @@ LEFT JOIN dpi_feed f ON f.product = d.product AND d.day = f.hour
 
 ),
 
-dpi_revenue AS (
+dpi_daily_revenue AS (
 
 SELECT
     DISTINCT
     *,
-    SUM(aum * .00665/365) OVER (ORDER BY day) AS revenue
+    aum * (.00665/365) AS daily_revenue
 FROM dpi_aum
 
 )
 
-SELECT * FROM dpi_revenue
+SELECT 
+    *,
+    SUM(daily_revenue) OVER (ORDER BY day ASC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS revenue
+FROM dpi_daily_revenue
