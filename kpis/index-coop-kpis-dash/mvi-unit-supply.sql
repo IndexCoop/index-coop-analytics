@@ -36,6 +36,8 @@ mvi_units AS (
 )
 
 SELECT 
+    DISTINCT
     day, 
     SUM(amount) OVER (ORDER BY day) AS mvi
 FROM mvi_units
+ORDER BY 1

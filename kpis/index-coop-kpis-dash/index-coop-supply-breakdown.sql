@@ -1249,13 +1249,6 @@ bed_uniswap_v3_supply AS (
     select      * 
     from        erc20."tokens"
     
-    UNION ALL
-    
-    SELECT 
-        '\x2af1df3ab0ab157e1e2ad8f88a7d04fbea0c7dc6',
-        'BED',
-        18
-        
     )
 
     -- Liquidity added to the pool

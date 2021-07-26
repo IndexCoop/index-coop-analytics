@@ -36,7 +36,9 @@ units AS (
 )
 
 SELECT 
+    DISTINCT
     day, 
     SUM(amount) OVER (ORDER BY day) AS bed
 FROM units
 WHERE day >= '07-21-2021'
+ORDER BY 1
