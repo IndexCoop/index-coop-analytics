@@ -26,10 +26,12 @@ borrow_balance AS (
 px_dex AS (
     SELECT *
     FROM (
-        SELECT hour,
-            median_price AS ceth_usd -- TODO: USD price for cETH dropping to inconsistent values sometimes
-        FROM dex."view_token_prices" pxd
-        WHERE pxd.contract_address = '\x4ddc2d193948926d02f9b1fe9e1daa0718270ed5'
+        SELECT date_trunc('hour', evt_block_time) AS hour,
+            avg(price / ((e."mintTokens" / 1e8) / (e."mintAmount" / 1e18))) AS ceth_usd
+        FROM compound_v2."cEther_evt_Mint" e
+        JOIN prices.layer1_usd_eth p ON date_trunc('hour', p.minute) = date_trunc('hour', e.evt_block_time)
+        WHERE e."mintAmount" > 10000000000000
+        GROUP BY 1
     ) alias0
     RIGHT JOIN (
         SELECT hour::timestamptz
