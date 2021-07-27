@@ -36,6 +36,8 @@ units AS (
 )
 
 SELECT 
+    DISTINCT
     day, 
     SUM(amount) OVER (ORDER BY day) AS fli
 FROM units
+ORDER BY 1

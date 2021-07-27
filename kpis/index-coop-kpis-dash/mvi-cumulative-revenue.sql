@@ -119,10 +119,13 @@ mvi_revenue AS (
 SELECT
     DISTINCT
     *,
-    SUM(aum * .0095/365) OVER (ORDER BY day) AS revenue
+    aum * (.0095/365) AS daily_revenue
 FROM mvi_aum
 
 )
 
-SELECT * FROM mvi_revenue
-WHERE revenue IS NOT NULL
+SELECT 
+    *,
+    SUM(daily_revenue) OVER (ORDER BY day ASC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS revenue
+FROM mvi_revenue
+WHERE daily_revenue IS NOT NULL

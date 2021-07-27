@@ -1,6 +1,6 @@
--- https://duneanalytics.com/queries/27995/56566
+-- https://duneanalytics.com/queries/77496
 
---- Index Coop Supply Breakdown
+-- Index Coop Supply Breakdown
 
 -- DPI Supply Breakdown
 WITH dpi_uniswap_pairs AS (
@@ -1248,7 +1248,7 @@ bed_uniswap_v3_supply AS (
     
     select      * 
     from        erc20."tokens"
-    
+        
     )
 
     -- Liquidity added to the pool
@@ -1533,18 +1533,30 @@ UNION ALL
 
 SELECT * FROM bed
 
+),
+
+total AS (
+
+    SELECT
+        day,
+        'Total' AS product,
+        SUM(tvl) AS tvl,
+        SUM(itvl) AS itvl,
+        SUM(utvl) AS utvl
+    FROM coop
+    GROUP BY 1, 2
+
 )
 
 SELECT
     day,
-    SUM(total) AS total,
-    SUM(incentivized) AS incentivized,
-    SUM(unincentivized) AS unincentivized,
-    SUM(liquidity) AS liquidity,
-    SUM(tvl) AS tvl,
-    SUM(itvl) AS itvl,
-    SUM(utvl) AS utvl,
-    SUM(liquidity_value) AS liquidity_value
+    product,
+    tvl,
+    itvl,
+    utvl
 FROM coop
-GROUP BY 1
-ORDER BY 1
+
+UNION ALL
+
+SELECT * FROM total
+
