@@ -1,5 +1,5 @@
 /*
-https://duneanalytics.com/queries/92066
+https://duneanalytics.com/queries/87944
 Wallet / Address
 '\x5bc4249641b4bf4e37ef513f3fa5c63ecab34881' - MVI|ETH LP Staking Contract
 '\x4d3c5db2c68f6859e0cd05d080979f597dd64bff' - MVI|ETH LP Token 
@@ -136,9 +136,11 @@ mvi_eth_lp_price as (
     left join mvi_eth_lp_price melp
     on lc.day = melp.day
     where lc.day >= '2021-04-07 00:00' -- date of MVI officially launch
-),
+)
 
- index_reward_claimed AS ( -- INDEX rewards
+-- END copied block here
+
+, index_reward_claimed AS ( -- INDEX rewards
 
     SELECT
     tr."to" AS address,
@@ -147,8 +149,8 @@ mvi_eth_lp_price as (
      WHERE tr."from" = '\x5bc4249641b4bf4e37ef513f3fa5c63ecab34881' 
      and  contract_address = '\x0954906da0bf32d5479e25f46056d22f08464cab'
      group by 1
-),
-  lp_staked AS (
+)
+, lp_staked AS (
     SELECT
     tr."from" AS address,
     evt_block_time,
@@ -171,10 +173,9 @@ mvi_eth_lp_price as (
     select *
     from lp_staked
     union
-    select * 
+    select *
     from lp_withdrawn
 )
-
 , lp_transfers_daily as (
     select address
         , date_trunc('day', evt_block_time) as day
@@ -182,12 +183,10 @@ mvi_eth_lp_price as (
     from lp_transfers
     group by 1,2
 )
-
 , days as (
     select generate_series(min(day), date_trunc('day',now()), '1 day') as day
     from lp_transfers_daily
 )
-
 , lp_transfers_day AS (
     SELECT
         date_trunc('day', t.evt_block_time) as day,
@@ -196,12 +195,10 @@ mvi_eth_lp_price as (
     FROM lp_transfers t
     GROUP BY 1,2
 )
-
 , lp_balances_w_gap_days AS (
     SELECT
         day,
         address,
-        change as net_change,
         sum(change) OVER (PARTITION BY address ORDER BY day) AS "balance",
         lead(day, 1, now()) OVER (PARTITION BY address ORDER BY day) AS next_day
     FROM lp_transfers_day
@@ -236,20 +233,78 @@ mvi_eth_lp_price as (
     group by 1
 )
 
-, remaining_lp_appx_index_earned as (
-select ai.address, sum(lt.amount) as remaining_lp, ai.num_days_earned, ai.total_index_rewards_earned,  coalesce(ir.amount,0) AS index_claimed_from_staking
-from lp_transfers lt
-left join  approximate_index_earned ai
-on ai.address = lt.address
+-- TODO: get the most up to date LP balances by account
+
+, all_transfers as (
+SELECT  ls.address,  ls.amount as "Staked LP", lw.amount as "Withdrawn LP", ir.amount as "rewards", (ls.amount+lw.amount) as remaining -- ls.tx_hash, lw.tx_hash
+--lt.address, sum(it.index_amount) as index, sum(lt.lp_amount) as lp
+--lt.address, it.index_amount as index, lt.lp_amount as lp
+FROM lp_staked ls
+left join lp_withdrawn lw
+on ls.address = lw.address
 left join index_reward_claimed ir
-on ai.address = ir.address
-group by 1,3,4,5
+on ls.address = ir.address
+GROUP BY 1,2,3,4,5
+order by 5 desc
+)
+, farmers as(
+select address, 
+"Staked LP", 
+coalesce("Withdrawn LP",0) as "Withdrawn LP",
+coalesce("rewards",0) as rewards,
+"Staked LP" + coalesce("Withdrawn LP",0)  as "Remaining LP"
+from all_transfers
 )
 
-select *, 
-case
-when index_claimed_from_staking = 0 then 'hodl'
-else 'spent'
-end as type
-from remaining_lp_appx_index_earned
+/*with_index as (
+select coalesce("amount",0) as amount,
+wallet_address
+from erc20."view_token_balances_latest"
+where "token_address" = '\x0954906da0Bf32d5479e25f46056d22f08464cab'
+and "token_symbol" = 'INDEX'
+limit 10000*/
+--),
 
+, temp_table as (
+select f.address, 
+f."Remaining LP", 
+f.rewards -- rewards claimed from Staking Contract
+--coalesce(wi.amount,0) as amount
+from farmers f
+--left join with_index wi
+--on f.address = wi.wallet_address
+),
+
+transfers as (
+
+          SELECT
+            tr."to" AS address,
+            sum(tr.value / 1e18) AS amount,
+          --  date_trunc('minute', evt_block_time) AS evt_block_minute,
+            'swap/tranfer' AS type
+         --   evt_tx_hash
+          FROM erc20."ERC20_evt_Transfer" tr
+          WHERE contract_address = '\x0954906da0Bf32d5479e25f46056d22f08464cab'
+          and evt_block_time > '2021-04-06 00:00'
+          group by 1
+          
+    )      
+    
+    
+select 
+tt.address -- stakers address
+, tt."Remaining LP" -- remaining lp token on staking contract
+, tt.rewards      -- rewards claimed
+, aie.num_days_earned -- number of days that they've earned rewards across
+, aie.total_index_rewards_earned
+, coalesce(t.amount,0) as amount_transferred   -- amount swapped or transffered to another wallet
+, case
+    when t.amount is null then 'hodl'
+    else 'spent'
+    end as type
+from temp_table tt
+left join transfers t
+on tt.address = t.address
+left join approximate_index_earned aie
+on tt.address = aie.address
+order by aie.total_index_rewards_earned desc
