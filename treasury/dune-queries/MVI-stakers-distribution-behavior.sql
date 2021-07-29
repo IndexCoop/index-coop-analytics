@@ -144,9 +144,9 @@ SELECT
 , index_reward_claimed AS ( -- INDEX rewards
 
     SELECT
-    tr."to" AS address
-    , min(evt_block_time) as first_claim_time
-    , sum(-tr.value/1e18) AS amount
+        tr."to" AS address
+        , min(evt_block_time) as first_claim_time
+        , sum(-tr.value/1e18) AS amount
      FROM erc20."ERC20_evt_Transfer" tr 
      WHERE tr."from" = '\x5bc4249641b4bf4e37ef513f3fa5c63ecab34881' -- LP contract address
      and  contract_address = '\x0954906da0bf32d5479e25f46056d22f08464cab' -- INDEX token
@@ -154,9 +154,9 @@ SELECT
 )
 , lp_staked AS (
     SELECT
-    tr."from" AS address
-    , evt_block_time
-    , tr.value/1e18 AS amount
+        tr."from" AS address
+        , evt_block_time
+        , tr.value/1e18 AS amount
      FROM erc20."ERC20_evt_Transfer" tr
    WHERE tr."to" = '\x5bc4249641b4bf4e37ef513f3fa5c63ecab34881' --  MVI-ETH LP Stake Contract (entered)
    and contract_address = '\x4d3c5db2c68f6859e0cd05d080979f597dd64bff' -- LP token
@@ -164,9 +164,9 @@ SELECT
 
 , lp_withdrawn AS (
     SELECT
-    tr."to" AS address,
-    evt_block_time,
-    -tr.value/1e18 as amount
+        tr."to" AS address
+        , evt_block_time
+        , -tr.value/1e18 as amount
      FROM erc20."ERC20_evt_Transfer" tr 
      WHERE tr."from" = '\x5bc4249641b4bf4e37ef513f3fa5c63ecab34881' -- MVI-ETH LP Stake Contract (left)
      and contract_address = '\x4d3c5db2c68f6859e0cd05d080979f597dd64bff'
@@ -191,26 +191,26 @@ SELECT
 )
 , lp_transfers_day AS (
     SELECT
-        date_trunc('day', t.evt_block_time) as day,
-        t.address,
-        sum(t.amount) AS change 
+        date_trunc('day', t.evt_block_time) as day
+        , t.address
+        , sum(t.amount) AS change 
     FROM lp_transfers t
     GROUP BY 1,2
 )
 , lp_balances_w_gap_days AS (
     SELECT
-        day,
-        address,
-        sum(change) OVER (PARTITION BY address ORDER BY day) AS "balance",
-        lead(day, 1, now()) OVER (PARTITION BY address ORDER BY day) AS next_day
+        day
+        , address
+        , sum(change) OVER (PARTITION BY address ORDER BY day) AS "balance"
+        , lead(day, 1, now()) OVER (PARTITION BY address ORDER BY day) AS next_day
     FROM lp_transfers_day
 )
 
 , lp_balances_all_days AS (
     SELECT
-        d.day,
-        b.address,
-        sum(b.balance) AS "balance"
+        d.day
+        , b.address
+        , sum(b.balance) AS "balance"
     FROM lp_balances_w_gap_days b
     INNER JOIN days d ON b.day <= d.day AND d.day < b.next_day
     GROUP BY 1,2 --,3
@@ -251,9 +251,9 @@ SELECT
 , after_first_claim_transfers as (
 
     SELECT
-    tr."from" AS address
-    , sum(tr.value / 1e18) AS amount
-    , 'swap/transfer' AS type
+        tr."from" AS address
+        , sum(tr.value / 1e18) AS amount
+        , 'swap/transfer' AS type
     FROM erc20."ERC20_evt_Transfer" tr
     inner join index_reward_claimed irc on tr."from" = irc.address
     WHERE contract_address = '\x0954906da0Bf32d5479e25f46056d22f08464cab'
@@ -271,10 +271,10 @@ SELECT
     
 select bal.address
     , bal.balance as "LP Tokens Currently Staked"
-    , aie.num_days_earned as "Number of days earned rewards"
+    , coalesce(aie.num_days_earned, 0) as "Number of days earned rewards"
     , aie.total_index_rewards_earned as "Total INDEX rewards earned (estimate)"
-    , ic.amount as "Total INDEX rewards claimed (precise)"
-    , afct.amount as "INDEX tokens transferred after first claim"
+    , coalesce(ic.amount, 0) as "Total INDEX rewards claimed (precise)"
+    , coalesce(afct.amount, 0) as "INDEX tokens transferred after first claim"
 from lp_current_balance bal
 left join approximate_index_earned aie on bal.address = aie.address
 left join index_reward_claimed as ic on bal.address = ic.address
