@@ -1,5 +1,6 @@
 /*
-https://duneanalytics.com/queries/82789
+Don's copy: https://duneanalytics.com/queries/82789
+Jack's copy: https://duneanalytics.com/queries/95299 
 
 Wallet / Address
 '\x5bc4249641b4bf4e37ef513f3fa5c63ecab34881' - MVI|ETH LP Staking Contract
