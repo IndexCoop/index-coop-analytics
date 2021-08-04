@@ -55,7 +55,7 @@ sushiswap_remove AS (
       ELSE 0
     END AS amount,
     date_trunc('day', call_block_time) AS evt_block_day,
-    'uniswap_remove' AS type,
+    'sushiswap_remove' AS type,
     call_tx_hash AS evt_tx_hash
   FROM uniswap_v2."Router02_call_removeLiquidity"
   WHERE "tokenA" = '\x0b498ff89709d3838a063f1dfa463091f9801c2b'
@@ -71,7 +71,7 @@ sushiswap_remove AS (
       ELSE 0
     END AS amount,
     date_trunc('day', call_block_time) AS evt_block_day,
-    'uniswap_remove' AS type,
+    'sushiswap_remove' AS type,
     call_tx_hash AS evt_tx_hash
   FROM uniswap_v2."Router02_call_removeLiquidityWithPermit"
   WHERE "tokenA" = '\x0b498ff89709d3838a063f1dfa463091f9801c2b'
