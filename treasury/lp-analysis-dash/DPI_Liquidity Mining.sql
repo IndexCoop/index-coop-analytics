@@ -1,5 +1,6 @@
 /*
-https://duneanalytics.com/queries/94971
+Don: https://duneanalytics.com/queries/94971
+Jack: https://dune.xyz/queries/97969
 
 Wallet / Address
 '\xB93b505Ed567982E2b6756177ddD23ab5745f309' - DPI|ETH LP Staking Contract
