@@ -20,7 +20,7 @@ GROUP BY 1
 
 ),
 
-eth2x_daily_price_feed AS (
+btc2x_daily_price_feed AS (
 
     WITH prices_usd AS (
     
@@ -28,7 +28,7 @@ eth2x_daily_price_feed AS (
             date_trunc('day', minute) AS dt,
             AVG(price) AS price
         FROM prices.usd
-        WHERE symbol = 'ETH2x-FLI'
+        WHERE symbol = 'BTC2x-FLI'
         GROUP BY 1
         ORDER BY 1
         
@@ -85,7 +85,7 @@ eth2x_daily_price_feed AS (
     
     SELECT
         hour,
-        'ETH2x-FLI' AS product,
+        'BTC2x-FLI' AS product,
         (ARRAY_REMOVE(ARRAY_AGG(usd_price) OVER (ORDER BY hour), NULL))[COUNT(usd_price) OVER (ORDER BY hour)] AS usd_price,
         (ARRAY_REMOVE(ARRAY_AGG(eth_price) OVER (ORDER BY hour), NULL))[COUNT(eth_price) OVER (ORDER BY hour)] AS eth_price
     FROM fli_temp
@@ -126,7 +126,7 @@ eth2x_daily_price_feed AS (
 
 ),
 
-eth2x_days AS (
+btc2x_days AS (
     
     SELECT generate_series('2021-05-01'::timestamp, date_trunc('day', NOW()), '1 day') AS day -- Generate all days since the first contract
     
@@ -142,7 +142,7 @@ SELECT
     (COALESCE(m.quantity, 0) + COALESCE(r.quantity, 0)) * p.price AS net_volume_in_dollars,
     AVG(COALESCE(m.quantity, 0) + COALESCE(r.quantity, 0)) OVER (ORDER BY m.day ROWS BETWEEN 7 PRECEDING AND CURRENT ROW) AS av,
     AVG((COALESCE(m.quantity, 0) + COALESCE(r.quantity, 0)) * p.price) OVER (ORDER BY m.day ROWS BETWEEN 7 PRECEDING AND CURRENT ROW) AS av_in_dollars
-FROM eth2x_days d
+FROM btc2x_days d
 LEFT JOIN mint_volume m ON d.day = m.day
 LEFT JOIN redeem_volume r ON d.day = r.day
-LEFT JOIN eth2x_daily_price_feed p ON d.day = p.dt
+LEFT JOIN btc2x_daily_price_feed p ON d.day = p.dt
