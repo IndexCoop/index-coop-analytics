@@ -1,5 +1,3 @@
--- https://duneanalytics.com/queries/27649/56531
-
 -- DPI/ETH LP Staking Contract (INDEX rewards) --> \xB93b505Ed567982E2b6756177ddD23ab5745f309
 -- DPI/ETH LP Token / Pool Address --> \x4d5ef58aac27d99935e5b6b4a6778ff292059991
 -- DPI --> \x1494ca1f11d487c2bbe4543e90080aeba4ba3c2b
@@ -227,9 +225,10 @@ dpi_mint_burn_lp AS (
 dpi_mint_burn_lp_temp AS (
 
 SELECT
-    evt_block_day,
-    SUM(amount) AS lp_amount
-FROM dpi_mint_burn_lp
+    d.day AS evt_block_day,
+    COALESCE(SUM(p.amount), 0) AS lp_amount
+FROM dpi_days d
+LEFT JOIN dpi_mint_burn_lp p ON d.day = p.evt_block_day
 GROUP BY 1
 ORDER BY 1
 
@@ -273,9 +272,10 @@ dpi_stake_unstake_lm AS (
 dpi_stake_unstake_lm_temp AS (
 
 SELECT
-    evt_block_day,
-    SUM(amount) AS lm_amount
-FROM dpi_stake_unstake_lm
+    d.day AS evt_block_day,
+    COALESCE(SUM(s.amount), 0) AS lm_amount
+FROM dpi_days d
+LEFT JOIN dpi_stake_unstake_lm s ON d.day = s.evt_block_day
 GROUP BY 1
 ORDER BY 1
 
@@ -285,7 +285,11 @@ dpi_lm AS (
 
 SELECT
     *,
-    SUM(lm_amount) OVER (ORDER BY evt_block_day) AS lm_running_amount
+    CASE 
+        WHEN evt_block_day <= '08-13-2021'
+            THEN SUM(lm_amount) OVER (ORDER BY evt_block_day)
+        ELSE 0
+    END AS lm_running_amount
 FROM dpi_stake_unstake_lm_temp
 
 ),
@@ -464,3 +468,5 @@ LEFT JOIN dpi_lp_lm i ON t.day = i.evt_block_day
 LEFT JOIN dpi_7day_avg_index_rewards d ON t.day = d.evt_block_day
 LEFT JOIN dpi_daily_price_feed AS p ON t.day = p.dt
 WHERE t.day >= '2020-10-06'
+
+

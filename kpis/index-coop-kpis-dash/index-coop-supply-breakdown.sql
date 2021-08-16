@@ -1,6 +1,4 @@
--- https://duneanalytics.com/queries/27995/56566
-
---- Index Coop Supply Breakdown
+-- Index Coop Supply Breakdown
 
 -- DPI Supply Breakdown
 WITH dpi_uniswap_pairs AS (
@@ -284,7 +282,11 @@ dpi_lm AS (
 
 SELECT
     *,
-    SUM(lm_amount) OVER (ORDER BY evt_block_day) AS lm_running_amount
+    CASE 
+        WHEN evt_block_day <= '08-13-2021'
+            THEN SUM(lm_amount) OVER (ORDER BY evt_block_day)
+        ELSE 0
+    END AS lm_running_amount
 FROM dpi_stake_unstake_lm_temp
 
 ),
@@ -1248,7 +1250,7 @@ bed_uniswap_v3_supply AS (
     
     select      * 
     from        erc20."tokens"
-    
+        
     )
 
     -- Liquidity added to the pool
