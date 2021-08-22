@@ -3,6 +3,30 @@ https://dune.xyz/queries/110756
 
 List of address: https://github.com/SetProtocol/index-deployments/blob/master/deployments/outputs/1-
 
+        "0x10F87409E405c5e44e581A4C3F2eECF36AAf1f92", -  Proxy
+        "0x0954906da0Bf32d5479e25f46056d22f08464cab", -- INDEX Token Address
+        "0x3452a7f30a712e415a0674c0341d44ee9d9786f9", -- Uniswap INDEX/ETH LP
+        "0xA73DF646512C82550C2b3C0324c4EEdEE53b400C", -- SushiSwap INDEX/ETH LP
+        "0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd", -- SushiSwap: MasterChef LP Staking Pool 
+
+        "0xB93b505Ed567982E2b6756177ddD23ab5745f309", -- Index Coop: DPI staking rewards v2
+        "0x5bC4249641B4bf4E37EF513F3Fa5C63ECAB34881"  -- Index Coop: MVI staking rewards
+  
+        
+        "0x1df4564A96aAc2B6633F1ce2f3092a11e57F6c19",   -- Vesting
+        "0x0e800B09cBC50e2CCbb01C6A833c56Ef692F3e3E",   -- Vesting
+        "0x2f3a28DF7f031695c52C680A4f9888D947d666B4",   -- Vesting
+        "0x55c316DEA64D0B6CE20eAb843c821a10E3bdb91B",   -- Vesting
+        "0xec5bc904ABb557781b16435E344a59D2218a6E17",   -- Vesting
+        "0x7B15bB785167c610020B52bf4B790396D73bf8a0",   -- Vesting
+        "0x7833Ba760D9FE0085E39c490f5A8c66565770cA5",   -- Vesting
+        "0x3955ebF597154bD93d1Bf9b66BC571FeA3050c38",   -- Vesting
+        "0x9CDBCBC17614C07EC857fA39995634107332E035",   -- Vesting
+        "0xD0b396C37aC2AE6Eb207aE4a85ca0C3d549E09A0",   -- Vesting
+        "0x43D75513e7182C9c9513850b3a716Ff36F90e132",   -- Vesting
+        "0x0Def278718bB15eE2173C65fb24C131243fFcb83"    -- Vesting
+
+
 Requirements:
 - Create an interactive pie chart showing the INDEX token distribution.
 - Capture VC, Set Labs, DFP, Full Time contributors (as a block), community non FT (as a block) and LP positions.
@@ -24,9 +48,47 @@ and wallet_address != '\x56d68212113AC6cF012B82BD2da0E972091940Eb'-- ETHFLI LM R
 and wallet_address != '\x5bC4249641B4bf4E37EF513F3Fa5C63ECAB34881'-- 2nd MVI LM Rewards
 and wallet_address != '\xa73df646512c82550c2b3c0324c4eedee53b400c' -- INDEX on Sushiswap
 and wallet_address != '\x3452a7f30a712e415a0674c0341d44ee9d9786f9' -- INDEX on Uniswap_v2
-and wallet_address != '\x8c13148228765Ba9E84EAf940b0416a5e349A5e7' -- INDEX on Uniswap_v3
-
+and wallet_address != '\x8c13148228765Ba9E84EAf940b0416a5e349A5e7' -- INDEX on Uniswap_v3 
+and wallet_address != '\xd3d555bb655acba9452bfc6d7cea8cc7b3628c55' --- Set: rebalancer TBD if this needs to be included
 )
+                          
+                            -- checking wallets that currently hold  UNI INDEX/ETH LP except contracts/addresses stated below
+, wallets_with_uniindexlp as (  
+select * from erc20."view_token_balances_latest"
+where token_address = '\x3452a7f30a712e415a0674c0341d44ee9d9786f9'
+and wallet_address != '\x8f06FBA4684B5E0988F215a47775Bb611Af0F986'-- 1st DPI LM Rewards
+and wallet_address != '\xB93b505Ed567982E2b6756177ddD23ab5745f309'-- 2nd DPI LM Rewards
+and wallet_address != '\x56d68212113AC6cF012B82BD2da0E972091940Eb'-- ETHFLI LM Rewards (not active yet)
+and wallet_address != '\x5bC4249641B4bf4E37EF513F3Fa5C63ECAB34881'-- 2nd MVI LM Rewards
+and wallet_address != '\xa73df646512c82550c2b3c0324c4eedee53b400c' -- INDEX on Sushiswap
+and wallet_address != '\x3452a7f30a712e415a0674c0341d44ee9d9786f9' -- INDEX on Uniswap_v2
+and wallet_address != '\x8c13148228765Ba9E84EAf940b0416a5e349A5e7' -- INDEX on Uniswap_v3 
+and wallet_address != '\xd3d555bb655acba9452bfc6d7cea8cc7b3628c55' --- Set: rebalancer TBD if this needs to be included
+)                                   
+
+                            -- checking wallets that currently hold  Sushi  INDEX/ETH LP except contracts/addresses stated below
+, wallets_with_susindexlp as (  
+select * from erc20."view_token_balances_latest"
+where token_address = '\xa73df646512c82550c2b3c0324c4eedee53b400c'
+and wallet_address != '\x8f06FBA4684B5E0988F215a47775Bb611Af0F986'-- 1st DPI LM Rewards
+and wallet_address != '\xB93b505Ed567982E2b6756177ddD23ab5745f309'-- 2nd DPI LM Rewards
+and wallet_address != '\x56d68212113AC6cF012B82BD2da0E972091940Eb'-- ETHFLI LM Rewards (not active yet)
+and wallet_address != '\x5bC4249641B4bf4E37EF513F3Fa5C63ECAB34881'-- 2nd MVI LM Rewards
+and wallet_address != '\xa73df646512c82550c2b3c0324c4eedee53b400c' -- INDEX on Sushiswap
+and wallet_address != '\x3452a7f30a712e415a0674c0341d44ee9d9786f9' -- INDEX on Uniswap_v2
+and wallet_address != '\x8c13148228765Ba9E84EAf940b0416a5e349A5e7' -- INDEX on Uniswap_v3 
+and wallet_address != '\xd3d555bb655acba9452bfc6d7cea8cc7b3628c55' --- Set: rebalancer TBD if this needs to be included
+)                                    
+
+, wallet_with_all as (
+select wi.wallet_address, wi.amount_raw/1e18 as indextoken, wu.amount_raw/1e18 as unilptoken, ws.amount_raw/1e18 as sushilptoken
+from wallets_with_index wi
+left join wallets_with_uniindexlp wu
+on wi.wallet_address = wu.wallet_address
+left join wallets_with_susindexlp ws
+on wi.wallet_address = ws.wallet_address
+)
+
                                     -- checking Staking Reward Contracts that currently hold INDEX
 , farms_with_index as (
 select *
@@ -50,9 +112,28 @@ or  wallet_address = '\x3452a7f30a712e415a0674c0341d44ee9d9786f9' -- INDEX on Un
 or wallet_address = '\x8c13148228765Ba9E84EAf940b0416a5e349A5e7') -- INDEX on Uniswap_v3
 )
 
+, masterchef_add as (                                    -- checking added INDEX|ETH LP from MasterChef 
+select "user", sum(amount/1e18) as amount  from sushi."MasterChef_evt_Deposit"
+where pid = 75 --- 75 is used by INDEX/ETH SLP
+group by 1                                  
+)  
 
-                                            -- checking vesting contracts that can vote and currently hold INDEX 
-
+, masterchef_remove as (                                -- checking removed  INDEX|ETH LP from MasterChef
+select "user", -sum(amount/1e18) as amount from sushi."MasterChef_evt_Withdraw"
+where pid = 75 --- 75 is used by INDEX/ETH SLP
+group by 1                                      
+)     
+                                                        -- net_change of INDEX|ETH LP from MasterChef
+, masterchef_net_temp as (
+select * from masterchef_add
+union all
+select * from masterchef_remove
+)
+, masterchef_net as (
+select "user", sum(amount) as amount, 'staked' as masterchef
+from masterchef_net_temp
+group by 1                                          
+)
                                             --address that added INDEX to Uniswap LP
 , uni_add_liquidity as (
 select
@@ -272,37 +353,45 @@ group by 1,3
 )
                                 -- end of In/Out Summary for DEXes
                                 -- DEXes net_change
-, dex_net_lp as (                                
-select address, sum(amount) as amount, type 
+, uni_net_lp as (                                
+select address, sum(amount) as uniindex,
+case 
+    when sum(amount) > 0 then 'count as vote'
+    else 'do not count' 
+    end as indexpowah_uni
 from uni_summary_lp
-group by 1,3 
+group by 1
+)
 
-union all                            
---, sushi_net_lp as (                                
-select address, sum(amount) as amount, type 
+, sushi_net_lp as (                                
+select address, sum(amount) as sushiindex,
+case 
+    when sum(amount) > 0 then 'count as vote'
+    else 'do not count' 
+    end as indexpowah_sushi
 from sushi_summary_lp
-group by 1,3
+group by 1
 )
                                 -- count as vote if amount is > 0 else do not count
-, dex_summary_lp as (                               
-select address as wallet_address, amount, type,
-case 
-    when amount > 0 then 'count as vote'
-    else 'do not count' 
-    end as indexpowah
-from dex_net_lp
-)
-                                -- combined wallets_with_index and wallets that LPed
-, dex_and_wallets as (
-select wallet_address, amount
-from dex_summary_lp
-where indexpowah = 'count as vote'
+                     -- combine wallets with index and wallets that LPed
 
-union all
+/*select ww.wallet_address, ww.amount, un.uniindex, un.indexpowah_uni, sn.sushiindex, sn.indexpowah_sushi, mn.amount as lpmasterchef, mn.masterchef
+from wallets_with_index ww
+left join uni_net_lp un
+on ww.wallet_address = un.address
+left join sushi_net_lp sn
+on ww.wallet_address = sn.address
+left join masterchef_net mn
+on ww.wallet_address = mn."user"
+*/
+--select , sum(amount) as amount, 'staked' as masterchef
 
-select wallet_address, amount
-from wallets_with_index
-)
-
-select * from dex_and_wallets
-where amount > 0
+select wa.wallet_address, wa.indextoken, wa.unilptoken, wa.sushilptoken, un.uniindex, un.indexpowah_uni, sn.sushiindex, sn.indexpowah_sushi, mn.amount as lpmasterchef, mn.masterchef
+from wallet_with_all wa
+left join uni_net_lp un
+on wa.wallet_address = un.address
+left join sushi_net_lp sn
+on wa.wallet_address = sn.address
+left join masterchef_net mn
+on wa.wallet_address = mn."user"
+	
