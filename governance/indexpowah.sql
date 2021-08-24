@@ -372,7 +372,7 @@ case
 from sushi_summary_lp
 group by 1
 )
-                                -- count as vote if amount is > 0 else do not count
+                      -- count as vote if amount is > 0 else do not count
                      -- combine wallets with index and wallets that LPed
 
 /*select ww.wallet_address, ww.amount, un.uniindex, un.indexpowah_uni, sn.sushiindex, sn.indexpowah_sushi, mn.amount as lpmasterchef, mn.masterchef
@@ -386,6 +386,7 @@ on ww.wallet_address = mn."user"
 */
 --select , sum(amount) as amount, 'staked' as masterchef
 
+, all_summary as (
 select wa.wallet_address, wa.indextoken, wa.unilptoken, wa.sushilptoken, un.uniindex, un.indexpowah_uni, sn.sushiindex, sn.indexpowah_sushi, mn.amount as lpmasterchef, mn.masterchef
 from wallet_with_all wa
 left join uni_net_lp un
@@ -394,4 +395,18 @@ left join sushi_net_lp sn
 on wa.wallet_address = sn.address
 left join masterchef_net mn
 on wa.wallet_address = mn."user"
-	
+)
+
+
+select *,
+case
+    when (indextoken >= 0 and unilptoken is null and  sushilptoken is null ) then indextoken
+    when (indextoken >= 0 and unilptoken > 0 and uniindex >= 0 and  sushilptoken is null ) then indextoken + uniindex  -- unilptoken must be more than 0 before index can be counted as vote
+    when (indextoken >= 0 and unilptoken > 0 and uniindex < 0 and  sushilptoken is null ) then indextoken
+    when (indextoken >= 0 and unilptoken is null and  sushilptoken >= 0 and sushiindex >= 0) then indextoken + sushiindex  -- it is possible that sushilptoken (if 0) is staked in masterchef
+    when (indextoken >= 0 and unilptoken is null and  sushilptoken >= 0 and sushiindex < 0) then indextoken
+    when (indextoken >= 0 and unilptoken >= 0 and  sushilptoken >= 0 ) then indextoken + uniindex + sushiindex
+    else indextoken
+    end as total_power
+from all_summary   
+where indextoken >= 1 or unilptoken > 0 or sushilptoken > 0 or lpmasterchef > 0
