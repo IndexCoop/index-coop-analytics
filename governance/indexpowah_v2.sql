@@ -245,21 +245,18 @@ on wm.wallet_address = vs.wallet_address
 
                             -- checking wallets that currently hold  INDEX except contracts/addresses stated below
 , wallets_with_index as (  
-select * from erc20."view_token_balances_latest"
-where token_address = '\x0954906da0Bf32d5479e25f46056d22f08464cab'
-and wallet_address != '\x8f06FBA4684B5E0988F215a47775Bb611Af0F986'-- 1st DPI LM Rewards
-and wallet_address != '\xB93b505Ed567982E2b6756177ddD23ab5745f309'-- 2nd DPI LM Rewards
-and wallet_address != '\x56d68212113AC6cF012B82BD2da0E972091940Eb'-- ETHFLI LM Rewards (not active yet)
-and wallet_address != '\x5bC4249641B4bf4E37EF513F3Fa5C63ECAB34881'-- 2nd MVI LM Rewards
-and wallet_address != '\xa73df646512c82550c2b3c0324c4eedee53b400c' -- INDEX on Sushiswap
-and wallet_address != '\x3452a7f30a712e415a0674c0341d44ee9d9786f9' -- INDEX on Uniswap_v2
-and wallet_address != '\x8c13148228765Ba9E84EAf940b0416a5e349A5e7' -- INDEX on Uniswap_v3 
-and wallet_address != '\xd3d555bb655acba9452bfc6d7cea8cc7b3628c55' --- Set: rebalancer TBD if this needs to be included
-and wallet_address != '\x0000000000000000000000000000000000000000' --- mint/burn address
+select b.wallet_address
+  , case when nv.wallet_address is not null then 'Nonvoting' else 'Voting' end as wallet_type
+  , b.amount
+from erc20."view_token_balances_latest" b
+left join dune_user_generated.index_nonvoting_addresses nv on b.wallet_address = nv.wallet_address
+where b.token_address = '\x0954906da0Bf32d5479e25f46056d22f08464cab' -- INDEX token address
+and b.wallet_address <> '\x0000000000000000000000000000000000000000'
+and amount > 0
 )                     
 
 , temp as (
-select ww.wallet_address, ww."amount_raw"/1e18 as indextoken, coalesce(vu.index_votingpow, 0) as univotingpower, coalesce(vs.index_votingpow, 0) as sushivotingpower
+select ww.wallet_address, ww."amount" as indextoken, ww.wallet_type, coalesce(vu.index_votingpow, 0) as univotingpower, coalesce(vs.index_votingpow, 0) as sushivotingpower
 --(ww."amount_raw"/1e18 + vu.index_votingpow + vs.index_votingpow) total_votingpower
 from wallets_with_index ww
 left join voting_from_slp vs
@@ -268,9 +265,8 @@ left join voting_from_unilp vu
 on ww.wallet_address = vu.wallet_address
 )
 
-select wallet_address, indextoken, sushivotingpower, univotingpower, (indextoken + sushivotingpower + univotingpower) as total_votingpower
+select wallet_address, wallet_type, indextoken, sushivotingpower, univotingpower, (indextoken + sushivotingpower + univotingpower) as total_votingpower
 from temp
-
 
 
 
