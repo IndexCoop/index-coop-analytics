@@ -148,7 +148,7 @@ fli_revenue_temp AS (
         a.*,
         -- a.aum * .0117/365 AS streaming_revenue,
         -- b.revenue AS mint_burn_revenue,
-        (a.aum * .0117/365) + b.revenue AS revenue
+        (a.aum * .0117/365) + COALESCE(b.revenue, 0) AS revenue
     FROM fli_aum a
     LEFT JOIN fli_mint_burn_fee b ON a.day = b.day
     ORDER BY 1

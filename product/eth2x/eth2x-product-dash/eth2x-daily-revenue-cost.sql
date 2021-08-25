@@ -1,9 +1,10 @@
 -- https://duneanalytics.com/queries/53279/105647
 
+-- V2 query here - https://duneanalytics.com/queries/93652
 -- CONTRACTS
 -- BaseManager --> 0x445307De5279cD4B1BcBf38853f81b190A806075
 -- SupplyCapIssuanceHook --> 0x0F1171C24B06ADed18d2d23178019A3B256401D3
--- FeeSplitAdapter --> 0xA0D95095577ecDd23C8b4c9eD0421dAc3c1DaF87
+-- FeeSplitAdapter --> 0x26F81381018543eCa9353bd081387F68fAE15CeD
 -- FlexibleLeverageStrategyAdapter v1 --> 0x1335D01a4B572C37f800f45D9a4b36A53a898a9b
 -- FlexibleLeverageStrategyAdapter v2 --> 0x90A17826C80Ea4917BBD64b281d92aAF2bBb0024
 -- FlexibleLeverageStrategyAdapter v3 --> 0xF6ba6441D4DAc647898F4083483AA44Da8B1446f
@@ -40,14 +41,14 @@ WITH flsa_transactions AS (
         AND "from" = '\xd3d555bb655acba9452bfc6d7cea8cc7b3628c55'
     
     UNION ALL
-    
+    -- sorting by ETH2x-Contract address in V2 of this query
     -- v1 ripcord
     SELECT
         evt_tx_hash AS hash,
         evt_block_time AS block_time,
         'ripcord' AS transaction
     FROM setprotocol_v2."FlexibleLeverageStrategyAdapter_evt_RipcordCalled"
-    
+    where contract_address in ('\x1335D01a4B572C37f800f45D9a4b36A53a898a9b', '\x90A17826C80Ea4917BBD64b281d92aAF2bBb0024')
     -- UNION ALL
 
     -- v2 ripcord    
@@ -65,7 +66,7 @@ WITH flsa_transactions AS (
         evt_block_time AS block_time,
         'ripcord' AS transaction
     FROM setprotocol_v2."FlexibleLeverageStrategyExtension_evt_RipcordCalled"
-    
+    where contract_address in ('\xF6ba6441D4DAc647898F4083483AA44Da8B1446f')
     UNION ALL
     
     -- v1 rebalance iteration
@@ -74,7 +75,7 @@ WITH flsa_transactions AS (
         evt_block_time AS block_time,
         'rebalance iteration' AS transaction
     FROM setprotocol_v2."FlexibleLeverageStrategyAdapter_evt_RebalanceIterated"
-    
+    where contract_address in ('\x1335D01a4B572C37f800f45D9a4b36A53a898a9b', '\x90A17826C80Ea4917BBD64b281d92aAF2bBb0024')
     -- UNION ALL
     
     -- -- v2 rebalance iteration
@@ -92,7 +93,8 @@ WITH flsa_transactions AS (
         evt_block_time AS block_time,
         'rebalance iteration' AS transaction
     FROM setprotocol_v2."FlexibleLeverageStrategyExtension_evt_RebalanceIterated"
-    
+    where contract_address in ('\xF6ba6441D4DAc647898F4083483AA44Da8B1446f')
+
     UNION ALL
     
     -- v1 rebalance
@@ -101,7 +103,7 @@ WITH flsa_transactions AS (
         evt_block_time AS block_time,
         'rebalance' AS transaction
     FROM setprotocol_v2."FlexibleLeverageStrategyAdapter_evt_Rebalanced"
-    
+    where contract_address in ('\x1335D01a4B572C37f800f45D9a4b36A53a898a9b', '\x90A17826C80Ea4917BBD64b281d92aAF2bBb0024')
     -- UNION ALL
     
     -- v2 rebalance
@@ -119,6 +121,7 @@ WITH flsa_transactions AS (
         evt_block_time AS block_time,
         'rebalance' AS transaction
     FROM setprotocol_v2."FlexibleLeverageStrategyExtension_evt_Rebalanced"
+    where contract_address in ('\xF6ba6441D4DAc647898F4083483AA44Da8B1446f')
     
     UNION ALL 
     
@@ -128,7 +131,7 @@ WITH flsa_transactions AS (
         evt_block_time AS block_time,
         'update caller status' AS transaction
     FROM setprotocol_v2."FlexibleLeverageStrategyAdapter_evt_CallerStatusUpdated"
-    
+    where contract_address in ('\x1335D01a4B572C37f800f45D9a4b36A53a898a9b', '\x90A17826C80Ea4917BBD64b281d92aAF2bBb0024')
     -- UNION ALL
     
     -- -- v2 update caller status
@@ -146,6 +149,7 @@ WITH flsa_transactions AS (
         evt_block_time AS block_time,
         'update caller status' AS transaction
     FROM setprotocol_v2."FlexibleLeverageStrategyExtension_evt_CallerStatusUpdated"
+    where contract_address in ('\xF6ba6441D4DAc647898F4083483AA44Da8B1446f')
     
     UNION ALL
     
@@ -155,7 +159,7 @@ WITH flsa_transactions AS (
         evt_block_time AS block_time,
         'engage' AS transaction
     FROM setprotocol_v2."FlexibleLeverageStrategyAdapter_evt_Engaged"
-    
+    where contract_address in ('\x1335D01a4B572C37f800f45D9a4b36A53a898a9b', '\x90A17826C80Ea4917BBD64b281d92aAF2bBb0024')
     -- UNION ALL
     
     -- v2 engage
@@ -173,7 +177,7 @@ WITH flsa_transactions AS (
         evt_block_time AS block_time,
         'engage' AS transaction
     FROM setprotocol_v2."FlexibleLeverageStrategyExtension_evt_Engaged"
-    
+    where contract_address in ('\xF6ba6441D4DAc647898F4083483AA44Da8B1446f')
 
 ),
 
@@ -199,6 +203,7 @@ scih_transactions AS (
         evt_block_time AS block_time,
         'update supply cap' AS transaction
     FROM setprotocol_v2."SupplyCapIssuanceHook_evt_SupplyCapUpdated"
+    where contract_address = '\x0F1171C24B06ADed18d2d23178019A3B256401D3'
     
     UNION ALL
     
@@ -208,7 +213,7 @@ scih_transactions AS (
         evt_block_time AS block_time,
         'transfer ownership' AS transaction
     FROM setprotocol_v2."SupplyCapIssuanceHook_evt_OwnershipTransferred"
-
+    where contract_address = '\x0F1171C24B06ADed18d2d23178019A3B256401D3'
 ),
 
 -- Fee Adapter
@@ -219,6 +224,9 @@ scih_transactions AS (
     -- Register Upgrade
     -- Update Caller Status
     -- Update Anyone Callable
+    -- Query V2 - Fee Adaper doesn't need filtering yet as BTC2x Fee Adapter data is
+    -- under different project name on Dune(by mistake). Still adding it in so it all works when 
+    -- we have new FLI products. 
 fa_transactions AS (
 
     -- contract creation
@@ -237,6 +245,7 @@ fa_transactions AS (
         call_block_time AS block_time,
         'update fee recipient' AS transaction
     FROM indexcoop."FeeSplitAdapter_call_updateFeeRecipient"
+    where contract_address = '\x26F81381018543eCa9353bd081387F68fAE15CeD'
     
     UNION ALL 
     
@@ -246,6 +255,7 @@ fa_transactions AS (
         evt_block_time AS block_time,
         'transfer ownership' AS transaction
     FROM indexcoop."FeeSplitAdapter_evt_OwnershipTransferred"
+    where contract_address = '\x26F81381018543eCa9353bd081387F68fAE15CeD'
     
     UNION ALL 
     
@@ -255,7 +265,8 @@ fa_transactions AS (
         evt_block_time AS block_time,
         'accrue fees' AS transaction
     FROM indexcoop."FeeSplitAdapter_evt_FeesAccrued"
-    
+    where contract_address = '\x26F81381018543eCa9353bd081387F68fAE15CeD'
+
     UNION ALL 
     
     -- register upgrade
@@ -264,7 +275,8 @@ fa_transactions AS (
         evt_block_time AS block_time,
         'register upgrade' AS transaction
     FROM indexcoop."FeeSplitAdapter_evt_UpgradeRegistered"
-    
+    where contract_address = '\x26F81381018543eCa9353bd081387F68fAE15CeD'
+
     UNION ALL
     
     -- update caller status
@@ -273,7 +285,8 @@ fa_transactions AS (
         evt_block_time AS block_time,
         'update caller status' AS transaction
     FROM indexcoop."FeeSplitAdapter_evt_CallerStatusUpdated"
-    
+    where contract_address = '\x26F81381018543eCa9353bd081387F68fAE15CeD'
+
     UNION ALL
     
     -- update anyone callable
@@ -282,7 +295,7 @@ fa_transactions AS (
         evt_block_time AS block_time,
         'update anyone callable' AS transaction
     FROM indexcoop."FeeSplitAdapter_evt_AnyoneCallableUpdated"
-
+    where contract_address = '\x26F81381018543eCa9353bd081387F68fAE15CeD'
 ),
 
 -- Manager
@@ -310,6 +323,7 @@ mngr_transactions AS (
         call_block_time AS block_time,
         'set manager' AS transaction
     FROM setprotocol_v2."BaseManager_call_setManager"
+    where contract_address = '\x445307De5279cD4B1BcBf38853f81b190A806075'
     
     UNION ALL
     
@@ -319,7 +333,8 @@ mngr_transactions AS (
         evt_block_time AS block_time,
         'set operator' AS transaction
     FROM setprotocol_v2."BaseManager_evt_OperatorChanged"
-    
+    where contract_address = '\x445307De5279cD4B1BcBf38853f81b190A806075'
+
     UNION ALL
     
     -- add adapter
@@ -328,6 +343,7 @@ mngr_transactions AS (
         evt_block_time AS block_time,
         'add adapter' AS transaction
     FROM setprotocol_v2."BaseManager_evt_AdapterAdded"
+    where contract_address = '\x445307De5279cD4B1BcBf38853f81b190A806075'
     
     UNION ALL
     
@@ -337,7 +353,8 @@ mngr_transactions AS (
         evt_block_time AS block_time,
         'remove adapter' AS transaction
     FROM setprotocol_v2."BaseManager_evt_AdapterRemoved"
-    
+    where contract_address = '\x445307De5279cD4B1BcBf38853f81b190A806075'
+
     UNION ALL
     
     -- change methodologist
@@ -346,7 +363,7 @@ mngr_transactions AS (
         evt_block_time AS block_time,
         'change methodologist' AS transaction
     FROM setprotocol_v2."BaseManager_evt_MethodologistChanged"
-
+    where contract_address = '\x445307De5279cD4B1BcBf38853f81b190A806075'
 ),
 
 transaction_costs_temp AS (
@@ -501,10 +518,9 @@ fli_mint_burn_amount AS (
 
 SELECT
     day,
-    action,
     SUM(ABS(amount)) AS amount
 FROM fli_mint_burn
-GROUP BY 1, 2
+GROUP BY 1
 
 ),
 
@@ -564,6 +580,5 @@ agg AS (
 )
 
 SELECT * FROM agg
-
 
 
