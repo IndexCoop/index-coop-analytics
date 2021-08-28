@@ -326,7 +326,7 @@ select address from voting_from_slp
 )
 
 , summary_all as (
-select aa.address, fi.index_bal
+select aa.address, coalesce(fi.index_bal, 0) as index_bal
 , coalesce(fu.unilp_bal, 0) as unilp_bal, fu."Index/LP(Uni)", (fu.unilp_bal * fu."Index/LP(Uni)") as unilp_votingpow
 , coalesce(fs.slp_bal, 0) as slp_bal, coalesce(fs.slp_staked, 0) as slp_staked , fs."Index/LP(Sushi)", ((fs.slp_bal + fs.slp_staked) * fs."Index/LP(Sushi)") as slp_votingpow
 from alladdress aa
