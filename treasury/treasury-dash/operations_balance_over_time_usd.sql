@@ -1,10 +1,7 @@
 /*
-    This should be identical to USD Treasury Balance 1
-    with the query here: https://duneanalytics.com/queries/44939
+    query here: https://dune.xyz/queries/135511
 
-    Except that it takes a different "end_date" parameter.
-    The point of this is to show balances on two different days.
-    Query for this one here: https://duneanalytics.com/queries/66423
+    Balance of the Operations Account over time.
 
     forked from https://duneanalytics.com/queries/22041/46378
 
@@ -20,26 +17,20 @@
 */
 
 -- Start Generalized Price Feed block - see generalized_price_feed.sql
--- Modified price feed using EOD prices
-with prices_by_minute as (
-SELECT
-        minute
+
+
+WITH prices_usd AS (
+
+    SELECT
+        date_trunc('day', minute) AS dt
         , symbol
         , decimals
-        , price
-        , row_number() over (partition by symbol, date_trunc('day', minute) order by minute desc) as row_num
-        
+        , AVG(price) AS price
     FROM prices.usd
     WHERE symbol in ('INDEX', 'DPI', 'MVI', 'ETH2x-FLI', 'BTC2x-FLI', 'USDC')
+    GROUP BY 1,2,3
 )
-, prices_usd as (
-    select date_trunc('day', minute) as dt
-        , symbol
-        , decimals
-        , price -- Closing price at EOD UTC
-    from prices_by_minute
-    where row_num = 1
-)
+    
 , eth_swaps AS (
     -- Uniswap price feed
     SELECT
@@ -138,27 +129,21 @@ SELECT
         -- , (ARRAY_REMOVE(ARRAY_AGG(asset_price) OVER (PARTITION BY symbol ORDER BY hour), NULL))[COUNT(asset_price) OVER (PARTITION BY symbol ORDER BY hour)] AS asset_price
     FROM swap_temp
 )
-, swap_price_feed_hour as (
-    select hour
-        , u.symbol
-        , usd_price as price
-        , row_number() over (partition by u.symbol, date_trunc('day', hour) order by hour desc) as row_num
-    from swap_feed u
-    left join prices_usd p on date_trunc('day', u.hour) = p.dt
-        and u.symbol = p.symbol
-    where p.dt is null
-    and usd_price is not null
-)
 , swap_price_feed AS ( -- only include the uni feed when there's no corresponding price in prices_usd
 
     SELECT
         date_trunc('day', hour) AS dt
-        , symbol
-        , price
-    FROM swap_price_feed_hour
-    where row_num = 1
+        , u.symbol
+        , AVG(usd_price) AS price
+    FROM swap_feed u
+    left join prices_usd p on date_trunc('day', u.hour) = p.dt
+        and u.symbol = p.symbol
+    WHERE p.dt is null
+        AND usd_price IS NOT NULL
+    GROUP BY 1, 2
 
 ),
+
 prices AS (
 
 SELECT
@@ -177,8 +162,8 @@ FROM swap_price_feed
 -- End price feed block - output is CTE "prices"
 , wallets AS (
     SELECT 'INDEX' AS org
-        , '\x9467cfadc9de245010df95ec6a585a506a8ad5fc'::bytea AS address
-        , 'Treasury Wallet' AS wallet
+        , '\xFafd604d1CC8b6B3B6CC859cF80Fd902972371C1'::bytea AS address
+        , 'Operations Account' AS wallet
     /*UNION
     SELECT 'INDEX' AS org
         , '\xe2250424378b6a6dC912f5714cfd308a8D593986'::bytea AS address
@@ -226,7 +211,6 @@ FROM swap_price_feed
     AND evt_block_time >= (SELECT min(day) FROM creation_days)
     GROUP BY 1,2,3
 )
-
 , decimals as (
     select distinct contract_address
     , decimals
@@ -266,29 +250,23 @@ FROM swap_price_feed
     GROUP BY 1,2 --,3
     ORDER BY 1,2 --,3
 )
-, usd_value_all_days as (
-    SELECT
-        b.day,
-    --    b.address,
-    --    w.wallet,
-    --    w.org,
-        b.contract_address,
-        p.symbol AS token,
-        b.balance,
-        p.price,
-        b.balance * coalesce(p.price,0) AS usd_value
-        , rank() over (order by b.day desc)
-    FROM balances_all_days b
-    left join erc20.tokens t on b.contract_address = t.contract_address
-    LEFT OUTER JOIN prices p ON t.symbol = p.symbol AND b.day = p.dt
-    -- LEFT OUTER JOIN wallets w ON b.address = w.address
-    where b.day <= '{{end_date_2}}'
-    ORDER BY usd_value DESC
-    LIMIT 10000
-)
-select token
-    , balance
-    , usd_value
-from usd_value_all_days
-where rank = 1
+
+
+SELECT
+    date_trunc('{{date_granularity}}',b.day) as date
+--    b.address,
+--    w.wallet,
+--    w.org,
+    , b.contract_address
+    , p.symbol AS token
+    -- b.balance,
+    -- p.price,
+    , avg(b.balance * coalesce(p.price,0)) AS avg_usd_value
+FROM balances_all_days b
+left join erc20.tokens t on b.contract_address = t.contract_address
+LEFT OUTER JOIN prices p ON t.symbol = p.symbol AND b.day = p.dt
+-- LEFT OUTER JOIN wallets w ON b.address = w.address
+where b.day between '{{start_date}}' and '{{end_date}}'
+group by 1,2,3
+LIMIT 10000
 ;
