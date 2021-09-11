@@ -1,5 +1,5 @@
 /*
-https://dune.xyz/queries/126630
+https://dune.xyz/queries/117913
 
 List of address: https://github.com/SetProtocol/index-deployments/blob/master/deployments/outputs/1-
 
@@ -38,7 +38,33 @@ Deliverables for INDEX token:
 
                     --checking current INDEX token Balance for all wallet
 with 
-index_transfers as (
+
+vesting_mapping as (
+select '\x1df4564A96aAc2B6633F1ce2f3092a11e57F6c19'::bytea as vesting_address,'\x9fB64b232dEa3ba6e020F517b2BC8aFd0145880c'::bytea as voting_address
+union all                                                                 
+select '\x0e800B09cBC50e2CCbb01C6A833c56Ef692F3e3E'::bytea as vesting_address,'\x4f3a120e72c76c22ae802d129f599bfdbc31cb81'::bytea as voting_address
+union all                                                                     
+select '\x2f3a28DF7f031695c52C680A4f9888D947d666B4'::bytea as vesting_address,'\x9B5ea8C719e29A5bd0959FaF79C9E5c8206d0499'::bytea as voting_address
+union all                                                                     
+select '\x55c316DEA64D0B6CE20eAb843c821a10E3bdb91B'::bytea as vesting_address,'\xdd709cae362972cb3b92dcead77127f7b8d58202'::bytea as voting_address
+union all                                                                   
+select '\xec5bc904ABb557781b16435E344a59D2218a6E17'::bytea as vesting_address,'\x0a842c38fb93993bd6353a4afc784ccb99522359'::bytea as voting_address
+union all                                                                  
+select '\x7B15bB785167c610020B52bf4B790396D73bf8a0'::bytea as vesting_address,'\x70044278d556b0c962224e095397a52287c99cb5'::bytea as voting_address
+union all                                                                   
+select '\x7833Ba760D9FE0085E39c490f5A8c66565770cA5'::bytea as vesting_address,'\xb2c9d26f10c36ce43ce46156e7833dfba00a7276'::bytea as voting_address
+union all                                                                 
+select '\x3955ebF597154bD93d1Bf9b66BC571FeA3050c38'::bytea as vesting_address,'\x578152463e01de0fc1331250351dd6d11dafd9b3'::bytea as voting_address
+union all                                                                
+select '\x9CDBCBC17614C07EC857fA39995634107332E035'::bytea as vesting_address,'\x5bcf61c5e5c72457003fed3d292aaea1c06f3691'::bytea as voting_address
+union all                                                            
+select '\xD0b396C37aC2AE6Eb207aE4a85ca0C3d549E09A0'::bytea as vesting_address,'\xe1b6e4c28127c4704838a0a2d6c6f7c344944b22'::bytea as voting_address
+union all                                                             
+select '\x43D75513e7182C9c9513850b3a716Ff36F90e132'::bytea as vesting_address,'\x3b2cbbe6b4656548e995b26df0954d31c081e0e5'::bytea as voting_address
+union all                                                                
+select '\x0Def278718bB15eE2173C65fb24C131243fFcb83'::bytea as vesting_address,'\x0c497bd20de89d9b14637415405690ce1b1fd62f'::bytea as voting_address
+)
+, index_transfers as (
     --ERC20 Tokens
     select
         date_trunc('day', evt_block_time) as day,
@@ -322,7 +348,8 @@ union
 select address from voting_from_unilp
 union
 select address from voting_from_slp
-
+union 
+select voting_address from vesting_mapping
 )
 
 , summary_all as (
@@ -337,11 +364,31 @@ on aa.address = fs.address
 left join voting_from_unilp fu
 on aa.address = fu.address
 )
- 
- 
-select s.address, s.index_bal, s.unilp_bal, coalesce(s.unilp_votingpow, 0) as unilp_votingpow, s.slp_bal, s.slp_staked, coalesce(s.slp_votingpow, 0) as slp_votingpow,
-s.index_bal + coalesce(s.unilp_votingpow, 0) + coalesce(s.slp_votingpow, 0) as totalvoting,
+
+        -- filter the vesting address with INDEX balance and voting address
+
+, filter_vesting_address as (
+select sa.*, vm.voting_address 
+from vesting_mapping vm
+left join summary_all sa
+on vm.vesting_address = sa.address
+)
+
+, summary_all_w_voting_address as (
+select sa.*, fv.index_bal as vesting_bal from summary_all sa
+left join filter_vesting_address fv
+on sa.address = fv.voting_address
+where sa.address not in (select vesting_address::bytea from vesting_mapping )
+) 
+
+
+select s.address, s.index_bal, coalesce(s.vesting_bal, 0) as vesting_bal, s.unilp_bal, coalesce(s.unilp_votingpow, 0) as unilp_votingpow, s.slp_bal, s.slp_staked, coalesce(s.slp_votingpow, 0) as slp_votingpow,
+s.index_bal + coalesce(s.vesting_bal, 0) + coalesce(s.unilp_votingpow, 0) + coalesce(s.slp_votingpow, 0) as totalvoting,
 case when nv.wallet_address is not null then 'Nonvoting' else 'Voting' end as wallet_type
-from summary_all s
+from summary_all_w_voting_address s
 left join dune_user_generated.index_nonvoting_addresses nv on s.address = nv.wallet_address
 where s.address <> '\x0000000000000000000000000000000000000000'
+
+
+
+
