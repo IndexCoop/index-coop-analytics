@@ -1,12 +1,7 @@
 /*
-    This should be identical to USD Treasury Balance 1
-    with the query here: https://duneanalytics.com/queries/44939
+    query here: https://dune.xyz/queries/135522
 
-    Except that it takes a different "end_date" parameter.
-    The point of this is to show balances on two different days.
-    Query for this one here: https://duneanalytics.com/queries/66423
-
-    forked from https://duneanalytics.com/queries/22041/46378
+    Gives the balances of the Index Coop operations account.
 
     --- INDEX Treasury ---
 
@@ -20,6 +15,7 @@
 */
 
 -- Start Generalized Price Feed block - see generalized_price_feed.sql
+
 -- Modified price feed using EOD prices
 with prices_by_minute as (
 SELECT
@@ -159,6 +155,7 @@ SELECT
     where row_num = 1
 
 ),
+
 prices AS (
 
 SELECT
@@ -177,12 +174,13 @@ FROM swap_price_feed
 -- End price feed block - output is CTE "prices"
 , wallets AS (
     SELECT 'INDEX' AS org
+        , '\xFafd604d1CC8b6B3B6CC859cF80Fd902972371C1'::bytea AS address
+        , 'Operations Account' AS wallet
+    UNION
+    SELECT 'INDEX' AS org
         , '\x9467cfadc9de245010df95ec6a585a506a8ad5fc'::bytea AS address
         , 'Treasury Wallet' AS wallet
-    /*UNION
-    SELECT 'INDEX' AS org
-        , '\xe2250424378b6a6dC912f5714cfd308a8D593986'::bytea AS address
-        , 'Treasury Committee' AS wallet
+    /*
     union
     select 'INDEX' AS org
     , '\x26e316f5b3819264DF013Ccf47989Fb8C891b088'::bytea AS address
@@ -282,11 +280,11 @@ FROM swap_price_feed
     left join erc20.tokens t on b.contract_address = t.contract_address
     LEFT OUTER JOIN prices p ON t.symbol = p.symbol AND b.day = p.dt
     -- LEFT OUTER JOIN wallets w ON b.address = w.address
-    where b.day <= '{{end_date_2}}'
+    where b.day <= '{{end_date}}'
     ORDER BY usd_value DESC
     LIMIT 10000
 )
-select token
+select  token
     , balance
     , usd_value
 from usd_value_all_days
