@@ -1,5 +1,3 @@
--- https://duneanalytics.com/queries/53304/105666
-
 -- CONTRACTS
 -- BaseManager --> 0x445307De5279cD4B1BcBf38853f81b190A806075
 -- SupplyCapIssuanceHook --> 0x0F1171C24B06ADed18d2d23178019A3B256401D3
@@ -519,7 +517,7 @@ SELECT
     day,
     SUM(ABS(amount)) AS amount
 FROM fli_mint_burn
-GROUP BY 1
+GROUP BY day
 
 ),
 
