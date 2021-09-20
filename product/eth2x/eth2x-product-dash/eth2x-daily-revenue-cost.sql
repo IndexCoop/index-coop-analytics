@@ -1,3 +1,6 @@
+
+-- https://duneanalytics.com/queries/53279/105647
+
 -- V2 query here - https://duneanalytics.com/queries/93652
 -- CONTRACTS
 -- BaseManager --> 0x445307De5279cD4B1BcBf38853f81b190A806075
@@ -516,10 +519,9 @@ fli_mint_burn_amount AS (
 
 SELECT
     day,
-    action,
     SUM(ABS(amount)) AS amount
 FROM fli_mint_burn
-GROUP BY 1, 2
+GROUP BY 1
 
 ),
 
@@ -579,6 +581,5 @@ agg AS (
 )
 
 SELECT * FROM agg
-
 
 

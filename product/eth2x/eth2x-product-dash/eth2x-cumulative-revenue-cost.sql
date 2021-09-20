@@ -515,7 +515,6 @@ fli_mint_burn_amount AS (
 
 SELECT
     day,
-    
     SUM(ABS(amount)) AS amount
 FROM fli_mint_burn
 GROUP BY day
@@ -583,7 +582,3 @@ SELECT
     SUM(ABS(cost)) OVER (ORDER BY day) AS cost,
     SUM(profit) OVER (ORDER BY day) AS profit
 FROM agg
-
-
-
-
