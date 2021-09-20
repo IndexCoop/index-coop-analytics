@@ -515,10 +515,10 @@ fli_mint_burn_amount AS (
 
 SELECT
     day,
-    action,
+    
     SUM(ABS(amount)) AS amount
 FROM fli_mint_burn
-GROUP BY 1, 2
+GROUP BY day
 
 ),
 
