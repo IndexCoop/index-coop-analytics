@@ -72,7 +72,13 @@ mvi_liquidity_supply AS (
 
 mvi_lp_w_lm_option_supply AS (
 
-    SELECT dt, reserves FROM mvi_uniswap_supply
+    SELECT 
+        dt, 
+        CASE 
+            WHEN dt <= '09-19-2021' THEN reserves 
+            ELSE 0
+        END AS reserves
+    FROM mvi_uniswap_supply
 
 ),
 
@@ -149,9 +155,10 @@ mvi_mint_burn_lp AS (
 mvi_mint_burn_lp_temp AS (
 
 SELECT
-    evt_block_day,
-    SUM(amount) AS lp_amount
-FROM mvi_mint_burn_lp
+    d.day AS evt_block_day,
+    COALESCE(SUM(p.amount), 0) AS lp_amount
+FROM mvi_days d
+LEFT JOIN mvi_mint_burn_lp p ON d.day = p.evt_block_day
 GROUP BY 1
 ORDER BY 1
 
@@ -195,9 +202,10 @@ mvi_stake_unstake_lm AS (
 mvi_stake_unstake_lm_temp AS (
 
 SELECT
-    evt_block_day,
-    SUM(amount) AS lm_amount
-FROM mvi_stake_unstake_lm
+    d.day AS evt_block_day,
+    COALESCE(SUM(s.amount), 0) AS lm_amount
+FROM mvi_days d
+LEFT JOIN mvi_stake_unstake_lm s ON d.day = s.evt_block_day
 GROUP BY 1
 ORDER BY 1
 
