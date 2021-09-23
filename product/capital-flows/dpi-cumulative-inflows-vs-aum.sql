@@ -1,6 +1,30 @@
 WITH
 
---https://dune.xyz/queries/142372/280762
+-- DASHBOARD:   https://dune.xyz/anthonybowman/Index:-Net-Inflows-Monitoring
+-- QUERY:       https://dune.xyz/queries/142372/280762
+-- OUTLINE:
+    -- index_products
+    -- days
+    -- hours
+    -- days_and_tokens
+    -- hours_and_tokens
+    -- std_mint
+    -- std_burn
+    -- fli_mint
+    -- fli_burn
+    -- std_issuance
+    -- fli_issuance
+    -- issuance
+    -- all_issuance
+    -- v2swaps
+    -- v3swaps
+    -- sushi_swaps
+    -- weth_prices
+    -- wbtc_prices
+    -- hourly_usd_prices
+    -- daily_usd_prices
+    -- aum
+    -- cum_net_inflow
 
 index_products AS (
 SELECT 
@@ -30,7 +54,7 @@ SELECT
     p.name AS name,
     p.index_type AS index_type
 FROM days d
-CROSS JOIN index_products p -- WHERE d.day >= p.inception_date
+CROSS JOIN index_products p
 ),
 
 hours_and_tokens AS (
@@ -43,10 +67,8 @@ SELECT
     p.swap_type,
     p.swap_base
 FROM hours h
-CROSS JOIN index_products p -- WHERE d.day >= p.inception_date
+CROSS JOIN index_products p
 ),
-
--- Standard Mint Funtion
 
 std_mint AS (
 SELECT 
@@ -58,8 +80,6 @@ WHERE "_setToken" IN (SELECT token_address FROM index_products WHERE index_type 
 GROUP BY 1,2
 ),
 
--- Standard Burn Function
-
 std_burn AS (
 SELECT 
     date_trunc('day', evt_block_time) AS day,
@@ -69,8 +89,6 @@ FROM setprotocol_v2."BasicIssuanceModule_evt_SetTokenRedeemed"
 WHERE "_setToken" IN (SELECT token_address FROM index_products WHERE index_type = 'Standard')
 GROUP BY 1,2
 ),
-
--- FLI Mint Function
 
 fli_mint AS (
 SELECT 
@@ -82,8 +100,6 @@ WHERE "_setToken" IN (SELECT token_address FROM index_products WHERE index_type 
 GROUP BY 1,2
 ),
 
--- FLI Burn Function
-
 fli_burn AS (
 SELECT 
     date_trunc('day', evt_block_time) AS day,
@@ -93,8 +109,6 @@ FROM setprotocol_v2."DebtIssuanceModule_evt_SetTokenRedeemed"
 WHERE "_setToken" IN (SELECT token_address FROM index_products WHERE index_type = 'Leveraged')
 GROUP BY 1,2
 ),
-
--- Standard Net Issuance
 
 std_issuance AS (
 SELECT 
