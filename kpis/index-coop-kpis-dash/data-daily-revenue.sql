@@ -46,30 +46,19 @@ data AS (
 
 ),
 
-data_swap AS (
+data_sync AS (
 
 --eth/data sushi 0x208226200b45b82212b814f49efa643980a7bdd1
     
     SELECT
-        date_trunc('hour', sw."evt_block_time") AS hour,
-        ("amount0In" + "amount0Out")/1e18 AS a0_amt, 
-        ("amount1In" + "amount1Out")/1e18 AS a1_amt
-    FROM sushi."Pair_evt_Swap" sw
-    WHERE contract_address = '\x208226200b45b82212b814f49efa643980a7bdd1' -- liq pair address I am searching the price for
-        AND sw.evt_block_time >= '2021-09-21'
+        date_trunc('hour', evt_block_time) AS hour,
+        reserve1 / reserve0 AS eth_price,
+        (reserve1 / reserve0) * p.price AS usd_price
+    FROM sushi."Pair_evt_Sync" s
+    LEFT JOIN prices.usd p ON p.symbol = 'WETH' AND p.minute = date_trunc('minute', s.evt_block_time)
+    WHERE s.contract_address = '\x208226200b45b82212b814f49efa643980a7bdd1'
+    ORDER BY 1
 
-),
-
-data_a1_prcs AS (
-
-    SELECT 
-        avg(price) a1_prc, 
-        date_trunc('hour', minute) AS hour
-    FROM prices.usd
-    WHERE minute >= '2021-09-21'
-        AND contract_address ='\xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2' --weth as base asset
-    GROUP BY 2
-                
 ),
 
 data_hours AS (
@@ -82,11 +71,10 @@ data_temp AS (
 
     SELECT
         h.hour,
-        COALESCE(AVG((s.a1_amt/s.a0_amt)*a.a1_prc), NULL) AS usd_price, 
-        COALESCE(AVG(s.a1_amt/s.a0_amt), NULL) as eth_price
+        COALESCE(AVG(usd_price), NULL) AS usd_price, 
+        COALESCE(AVG(eth_price), NULL) as eth_price
     FROM data_hours h
-    LEFT JOIN data_swap s ON s."hour" = h.hour 
-    LEFT JOIN data_a1_prcs a ON h."hour" = a."hour"
+    LEFT JOIN data_sync s ON s."hour" = h.hour 
     GROUP BY 1
 
 ),
@@ -119,7 +107,7 @@ data_revenue AS (
 SELECT
     DISTINCT
     *,
-    aum * .0035/365 AS revenue
+    aum * (.0035/365) AS revenue
 FROM data_aum
 
 )
