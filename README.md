@@ -21,3 +21,17 @@ Please read through CONTRIBUTING for a primer on how to start contributing, as w
 ## Regarding DAO Analytics
 
 We are on the forefront of learning how to best support a DAO with data and analytics. DAO analytics groups are not common, but we have a belief that analytics can be a functional advantage for a DAO. The AWG is an iterative experiment to learn how to best support the DAO with best-in-class analytics.
+
+Important DashBoards - 
+Index Coop KPIs
+https://dune.xyz/jdcook/Index-Coop
+Index Coop Revenue - 
+https://dune.xyz/jdcook/Index-Coop-Revenue
+DPI - 
+https://dune.xyz/jdcook/DPI
+MVI - 
+https://dune.xyz/jdcook/MVI
+ETH2x FLI - 
+https://dune.xyz/sidhemraj/ETH2x-FLI-Product-Dashboard
+BTC2x FLI - 
+https://dune.xyz/sidhemraj/BTC2x-FLI-Product-DashBoard
