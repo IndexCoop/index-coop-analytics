@@ -1,4 +1,4 @@
---https://duneanalytics.com/queries/92099
+--https://dune.xyz/queries/92099
 
 drop table if exists dune_user_generated.loren_token_balance;
 create table dune_user_generated.loren_token_balance as 

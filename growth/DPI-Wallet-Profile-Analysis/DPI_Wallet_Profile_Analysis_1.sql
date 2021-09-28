@@ -1,4 +1,4 @@
---https://duneanalytics.com/queries/90330
+--https://dune.xyz/queries/90330
 
 drop table if exists dune_user_generated.holders_ever_had_250dpi;
 create table dune_user_generated.holders_ever_had_250dpi as

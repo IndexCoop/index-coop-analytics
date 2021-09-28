@@ -1,4 +1,4 @@
---https://duneanalytics.com/queries/90319
+--https://dune.xyz/queries/90319
 
 drop table if exists dune_user_generated.dpi_holders;
 create table  dune_user_generated.dpi_holders as 
@@ -8,6 +8,7 @@ select
     -"value"/1e18 as amount
 from erc20."ERC20_evt_Transfer"
 where "contract_address" = '\x1494ca1f11d487c2bbe4543e90080aeba4ba3c2b'
+   
 
 union all
 

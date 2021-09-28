@@ -1,5 +1,4 @@
---https://duneanalytics.com/queries/91206
-
+--https://dune.xyz/queries/91206
 with weth_pairs_v2 AS 
 ( -- Get exchange contract address and "other token" for WETH
     SELECT cr."pair" AS contract, 
@@ -25,18 +24,18 @@ swap_v2 AS
     JOIN weth_pairs_v2 ON sw."contract_address" = weth_pairs_v2."contract"
     JOIN erc20."tokens" tok ON weth_pairs_v2."other_token" = tok."contract_address"
     WHERE other_token in (
-        '\x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9',
-        '\x1f9840a85d5af5bf1d1762f925bdaddc4201f984',
-        '\x0954906da0Bf32d5479e25f46056d22f08464cab',
-        '\x72e364f2abdc788b7e918bc238b21f109cd634d7',
-        '\xaa6e8127831c9de45ae56bb1b0d4d4da6e5665bd',
-        '\xf629cbd94d3791c9250152bd8dfbdf380e2a3b9c',
-        '\xbb0e17ef65f82ab018d8edd776e8dd940327b28b',
-        '\x1494ca1f11d487c2bbe4543e90080aeba4ba3c2b',
-        '\xdac17f958d2ee523a2206206994597c13d831ec7',
-        '\xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
-        '\x6b175474e89094c44da98b954eedeac495271d0f'
-       )
+'\x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9',
+'\x1f9840a85d5af5bf1d1762f925bdaddc4201f984',
+'\x0954906da0Bf32d5479e25f46056d22f08464cab',
+'\x72e364f2abdc788b7e918bc238b21f109cd634d7',
+'\xaa6e8127831c9de45ae56bb1b0d4d4da6e5665bd',
+'\xf629cbd94d3791c9250152bd8dfbdf380e2a3b9c',
+'\xbb0e17ef65f82ab018d8edd776e8dd940327b28b',
+'\x1494ca1f11d487c2bbe4543e90080aeba4ba3c2b',
+'\xdac17f958d2ee523a2206206994597c13d831ec7',
+'\xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+'\x6b175474e89094c44da98b954eedeac495271d0f'
+)
     AND sw.evt_block_time >= date_trunc('days',now())
 ),
 
@@ -66,17 +65,17 @@ swap_v3 AS
     JOIN weth_pairs_v3 ON sw."contract_address" = weth_pairs_v3."contract"
     JOIN erc20."tokens" tok ON weth_pairs_v3."other_token" = tok."contract_address"
     WHERE other_token in (
-        '\x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9',
-        '\x1f9840a85d5af5bf1d1762f925bdaddc4201f984',
-        '\x0954906da0Bf32d5479e25f46056d22f08464cab',
-        '\x72e364f2abdc788b7e918bc238b21f109cd634d7',
-        '\xaa6e8127831c9de45ae56bb1b0d4d4da6e5665bd',
-        '\xf629cbd94d3791c9250152bd8dfbdf380e2a3b9c',
-        '\xbb0e17ef65f82ab018d8edd776e8dd940327b28b',
-        '\x1494ca1f11d487c2bbe4543e90080aeba4ba3c2b',
-        '\xdac17f958d2ee523a2206206994597c13d831ec7',
-        '\xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
-        '\x6b175474e89094c44da98b954eedeac495271d0f'
+'\x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9',
+'\x1f9840a85d5af5bf1d1762f925bdaddc4201f984',
+'\x0954906da0Bf32d5479e25f46056d22f08464cab',
+'\x72e364f2abdc788b7e918bc238b21f109cd634d7',
+'\xaa6e8127831c9de45ae56bb1b0d4d4da6e5665bd',
+'\xf629cbd94d3791c9250152bd8dfbdf380e2a3b9c',
+'\xbb0e17ef65f82ab018d8edd776e8dd940327b28b',
+'\x1494ca1f11d487c2bbe4543e90080aeba4ba3c2b',
+'\xdac17f958d2ee523a2206206994597c13d831ec7',
+'\xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+'\x6b175474e89094c44da98b954eedeac495271d0f'
 )
     AND sw.evt_block_time >= date_trunc('days',now())
 ),
