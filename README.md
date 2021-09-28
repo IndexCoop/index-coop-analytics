@@ -27,7 +27,7 @@ Index Coop KPIs<br>
 https://dune.xyz/jdcook/Index-Coop<br>
 Index Coop Revenue - <br>
 https://dune.xyz/jdcook/Index-Coop-Revenue<br>
-Index : Net Inflows Monitoring
+Index : Net Inflows Monitoring<br>
 https://dune.xyz/anthonybowman/Index:-Net-Inflows-Monitoring <br>
 DPI - <br>
 https://dune.xyz/jdcook/DPI<br>
