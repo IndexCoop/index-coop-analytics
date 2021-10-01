@@ -116,3 +116,4 @@ SELECT
     *,
     SUM(daily_revenue) OVER (ORDER BY day ASC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS revenue
 FROM data_revenue
+WHERE day >= '9-23-2021'

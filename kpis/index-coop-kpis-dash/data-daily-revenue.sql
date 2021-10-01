@@ -116,3 +116,4 @@ SELECT
     *,
     AVG(revenue) OVER (ORDER BY day ROWS BETWEEN 7 PRECEDING AND CURRENT ROW) AS av
 FROM data_revenue
+WHERE day >= '9-23-2021'

@@ -29,6 +29,6 @@ FROM (
     ON date_trunc('minute', block_time) = p.minute AND (token_a_address = p.contract_address OR token_b_address = p.contract_address)
     WHERE  (token_a_address = '\x33d63ba1e57e54779f7ddaeaa7109349344cf5f1'
         or token_b_address = '\x33d63ba1e57e54779f7ddaeaa7109349344cf5f1')
-        -- and block_time  > now() - interval '3 months'
+        AND date_trunc('day', block_time) >= '9-23-2021'
 ) t
 GROUP BY 1,2

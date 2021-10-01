@@ -2,10 +2,14 @@
 
 WITH token as (
 
-    -- SELECT
-    --     * 
-    -- FROM erc20.tokens 
-    -- WHERE symbol = 'DATA'
+    SELECT
+        contract_address,
+        decimals,
+        symbol
+    FROM erc20.tokens 
+    WHERE contract_address = '\x33d63ba1e57e54779f7ddaeaa7109349344cf5f1'
+
+    UNION DISTINCT
     
     SELECT
         '\x33d63ba1e57e54779f7ddaeaa7109349344cf5f1'::bytea AS contract_address,
@@ -339,5 +343,5 @@ SELECT
     dt,
     COUNT(DISTINCT(address))
 FROM exposure
-WHERE exposure > 0
+WHERE exposure > 0 AND dt < date_trunc('day', NOW()) AND dt >= '9-23-2021'
 GROUP BY 1

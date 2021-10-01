@@ -53,7 +53,7 @@ data_price_feed AS (
     
     data_hours AS (
         
-        SELECT generate_series('2021-09-21 00:00:00'::timestamp, date_trunc('hour', NOW()), '1 hour') AS hour -- Generate all days since the first contract
+        SELECT generate_series('2021-09-23 00:00:00'::timestamp, date_trunc('hour', NOW()), '1 hour') AS hour -- Generate all days since the first contract
         
     ),
     
@@ -109,14 +109,14 @@ data_price_feed AS (
     SELECT
         *
     FROM data_price
-    WHERE dt > '2021-09-20'
+    WHERE dt >= '2021-09-23'
     ORDER BY 1
 
 ),
 
 data_days AS (
     
-    SELECT generate_series('2021-09-21'::timestamp, date_trunc('day', NOW()), '1 day') AS day -- Generate all days since the first contract
+    SELECT generate_series('2021-09-23'::timestamp, date_trunc('day', NOW()), '1 day') AS day -- Generate all days since the first contract
     
 )
 

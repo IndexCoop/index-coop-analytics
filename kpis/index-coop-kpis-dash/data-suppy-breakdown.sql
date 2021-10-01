@@ -3,10 +3,14 @@
 -- DATA Supply Breakdown
 WITH token as (
 
-    -- SELECT
-    --     * 
-    -- FROM erc20.tokens 
-    -- WHERE symbol = 'DATA'
+    SELECT
+        contract_address,
+        decimals,
+        symbol
+    FROM erc20.tokens 
+    WHERE contract_address = '\x33d63ba1e57e54779f7ddaeaa7109349344cf5f1'
+
+    UNION DISTINCT
     
     SELECT
         '\x33d63ba1e57e54779f7ddaeaa7109349344cf5f1'::bytea AS contract_address,
@@ -92,6 +96,82 @@ data_liquidity_supply AS (
         SUM(reserves) AS reserves
     FROM data_liquidity_supply_temp
     GROUP BY 1
+
+),
+
+data_incentivized_supply AS (
+
+    WITH data_mint_burn_slp AS (
+    
+      SELECT
+        tr."from" AS address,
+        -tr.value / 1e18 AS amount,
+        date_trunc('day', evt_block_time) AS evt_block_day,
+        'burn' AS type,
+        evt_tx_hash
+      FROM erc20."ERC20_evt_Transfer" tr
+      WHERE contract_address = '\x208226200b45b82212b814f49efa643980a7bdd1'
+        AND tr."to" = '\x0000000000000000000000000000000000000000'
+    
+      UNION ALL
+    
+      SELECT
+        tr."to" AS address,
+        tr.value / 1e18 AS amount,
+        date_trunc('day', evt_block_time) AS evt_block_day,
+        'mint' AS type,
+        evt_tx_hash
+      FROM erc20."ERC20_evt_Transfer" tr
+      WHERE contract_address = '\x208226200b45b82212b814f49efa643980a7bdd1'
+        AND tr."from" = '\x0000000000000000000000000000000000000000'
+    
+    ),
+    
+    data_slp_by_day AS (
+    
+        WITH data_days AS (
+        
+            SELECT generate_series('2021-09-20'::timestamp, date_trunc('day', NOW()), '1 day') AS day -- Generate all days since the first contract
+        
+        ),
+        
+        data_slp_by_day AS (
+        
+            SELECT 
+                evt_block_day AS dt,
+                SUM(SUM(amount)) OVER (ORDER BY evt_block_day) AS amount
+            FROM data_mint_burn_slp
+            GROUP BY 1
+        
+        )
+    
+        SELECT 
+            d.day AS dt,
+            (ARRAY_REMOVE(ARRAY_AGG(s.amount) OVER (ORDER BY d.day), NULL))[COUNT(s.amount) OVER (ORDER BY d.day)] AS amount
+        FROM data_days d
+        LEFT JOIN data_slp_by_day s ON d.day = s.dt
+    
+    ),
+    
+    data_slp_onsen AS (
+    
+        SELECT
+            day AS dt,
+            amount_raw / 10^18 AS amount
+        FROM erc20."view_token_balances_daily"
+        WHERE wallet_address = '\xc2edad668740f1aa35e4d8f227fb8e17dca888cd'
+        AND token_address = '\x208226200b45b82212b814f49efa643980a7bdd1'
+        
+    )
+    
+    SELECT 
+        a.dt,
+        a.amount AS slp,
+        COALESCE(b.amount, 0) AS slp_in_onsen,
+        COALESCE(b.amount, 0) / a.amount AS percentage_slp_incentivized
+    FROM data_slp_by_day a
+    LEFT JOIN data_slp_onsen b ON a.dt = b.dt
+    ORDER BY dt
 
 ),
 
@@ -213,15 +293,16 @@ SELECT
     t.day,
     'DATA' AS product,
     t.data AS total,
-    l.reserves AS incentivized,
-    t.data - l.reserves AS unincentivized,
+    l.reserves * COALESCE(i.percentage_slp_incentivized, 0) AS incentivized,
+    t.data - COALESCE((l.reserves * i.percentage_slp_incentivized), 0) AS unincentivized,
     l.reserves AS liquidity,
     t.data * p.price AS tvl,
-    0 * p.price AS itvl,
-    (t.data - 0) * p.price AS utvl,
+    l.reserves * COALESCE(i.percentage_slp_incentivized, 0) * p.price AS itvl,
+    t.data - COALESCE((l.reserves * i.percentage_slp_incentivized), 0) * p.price AS utvl,
     l.reserves * p.price AS liquidity_value,
     p.price
 FROM data_total_supply t
 LEFT JOIN data_liquidity_supply l ON t.day = l.dt
+LEFT JOIN data_incentivized_supply i on t.day = i.dt
 LEFT JOIN data_price_feed p on t.day = p.dt
-WHERE t.day >= '2021-09-21'
+WHERE t.day >= '2021-09-23' AND t.day <= (SELECT MAX(hour) from data_sync)

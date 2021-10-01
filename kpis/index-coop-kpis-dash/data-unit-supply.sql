@@ -40,4 +40,5 @@ SELECT
     day, 
     SUM(amount) OVER (ORDER BY day) AS data
 FROM units
+WHERE day >= '9-23-2021'
 ORDER BY 1
