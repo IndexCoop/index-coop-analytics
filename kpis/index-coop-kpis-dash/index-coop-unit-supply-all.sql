@@ -38,6 +38,7 @@ dpi_units AS (
 dpi AS (
 
 SELECT 
+    DISTINCT
     day,
     'DPI' AS product,
     SUM(amount) OVER (ORDER BY day) AS units
@@ -84,6 +85,7 @@ fli_units AS (
 fli AS (
 
 SELECT 
+    DISTINCT
     day,
     'ETH2x-FLI' AS product,
     SUM(amount) OVER (ORDER BY day) AS fli
@@ -130,6 +132,7 @@ btc2x_units AS (
 btc2x AS (
 
     SELECT 
+        DISTINCT
         day, 
         'BTC2x-FLI' AS product,
         SUM(amount) OVER (ORDER BY day) AS btc2x
@@ -175,6 +178,7 @@ mvi_units AS (
 mvi AS (
 
 SELECT 
+    DISTINCT
     day, 
     'MVI' AS product,
     SUM(amount) OVER (ORDER BY day) AS mvi
@@ -220,6 +224,7 @@ bed_units AS (
 bed AS (
 
     SELECT 
+        DISTINCT
         day,
         'BED' AS product,
         SUM(amount) OVER (ORDER BY day) AS bed
@@ -228,25 +233,85 @@ bed AS (
 
 ),
 
+data_mint_burn AS (
+
+    SELECT 
+        date_trunc('day', evt_block_time) AS day, 
+        SUM("_quantity"/1e18) AS amount 
+        FROM setprotocol_v2."BasicIssuanceModule_evt_SetTokenIssued"
+        WHERE "_setToken" = '\x33d63ba1e57e54779f7ddaeaa7109349344cf5f1'
+        GROUP BY 1
+
+    UNION ALL
+
+    SELECT 
+        date_trunc('day', evt_block_time) AS day, 
+        -SUM("_quantity"/1e18) AS amount 
+    FROM setprotocol_v2."BasicIssuanceModule_evt_SetTokenRedeemed" 
+    WHERE "_setToken" = '\x33d63ba1e57e54779f7ddaeaa7109349344cf5f1'
+    GROUP BY 1
+),
+
+data_days AS (
+    
+    SELECT generate_series('2021-09-21'::timestamp, date_trunc('day', NOW()), '1 day') AS day -- Generate all days since the first contract
+    
+),
+
+data_units AS (
+
+    SELECT
+        d.day,
+        COALESCE(m.amount, 0) AS amount
+    FROM data_days d
+    LEFT JOIN data_mint_burn m ON d.day = m.day
+    
+),
+
+data_fin AS (
+
+    SELECT 
+        DISTINCT
+        day, 
+        'DATA' AS product,
+        SUM(amount) OVER (ORDER BY day) AS data
+    FROM data_units
+
+),
+
+data AS (
+
+    SELECT 
+        *
+    FROM data_fin
+    WHERE day >= '9-23-2021'
+    ORDER BY 1
+    
+),
+
 supply AS (
 
-SELECT DISTINCT * FROM dpi
-
-UNION ALL
-
-SELECT DISTINCT * FROM fli
-
-UNION ALL
-
-SELECT DISTINCT * FROM btc2x
-
-UNION ALL
-
-SELECT DISTINCT * FROM mvi
-
-UNION ALL
-
-SELECT DISTINCT * FROM bed
+    SELECT DISTINCT * FROM dpi
+    
+    UNION ALL
+    
+    SELECT DISTINCT * FROM fli
+    
+    UNION ALL
+    
+    SELECT DISTINCT * FROM btc2x
+    
+    UNION ALL
+    
+    SELECT DISTINCT * FROM mvi
+    
+    UNION ALL
+    
+    SELECT DISTINCT * FROM bed
+    
+    UNION ALL
+    
+    SELECT DISTINCT * FROM data
 
 )
 
