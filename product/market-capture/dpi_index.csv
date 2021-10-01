@@ -16,3 +16,4 @@ asset_address,symbol,in_index_time,out_index_time,id,name
 \xba100000625a3754423978a60c9317c58a424e3d,bal,2020-09-10,2020-09-10,balancer,Balancer
 \xdefa4e8a7bcba345f687a2f1456f5edd9ce97202,knc,2021-07-01,2021-07-01,kyber-network-crystal,Kyber Network Crystal
 \x0bc529c00c6401aef6d220be8c6ea1667f6ad93e,yfi,2020-09-10,2020-09-10,yearn-finance,yearn.finance
+\x3472A5A71965499acd81997a54BBA8D852C6E53d,badger,2021-08-03,2021-08-03,badger-dao,Badger DAO

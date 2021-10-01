@@ -48,12 +48,7 @@ def get_index_compositions_market_cap(compositions_table):
         else:
             to_timestamp = time_to_unix(coin[3])
         datas = cg.get_coin_market_chart_range_by_id(id=coin_id,vs_currency='usd',from_timestamp=from_timestamp,to_timestamp=to_timestamp)
-        # waxe has no market cap data,so use Fully Diluted Market Cap instead
-        if coin_id == 'waxe':
-            datas_df = pd.DataFrame(datas['prices'],columns=['dates','coinscap'])
-            datas_df['coinscap'] = datas_df['coinscap']*3700000
-        else:
-            datas_df = pd.DataFrame(datas['market_caps'],columns=['dates','coinscap'])
+        datas_df = pd.DataFrame(datas['market_caps'],columns=['dates','coinscap'])
         datas_df['coins'] = coin[1]
         coins_cap=coins_cap.append(datas_df)
         time.sleep(5)
