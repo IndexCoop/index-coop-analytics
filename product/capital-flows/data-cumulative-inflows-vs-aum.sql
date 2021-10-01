@@ -1,7 +1,6 @@
 WITH
-
 -- DASHBOARD:   https://dune.xyz/anthonybowman/Index:-Net-Inflows-Monitoring
--- QUERY:       https://dune.xyz/queries/142372/280762
+-- QUERY:       https://dune.xyz/queries/163690/320286
 -- OUTLINE:
     -- index_products
     -- days
@@ -30,7 +29,7 @@ index_products AS (
 SELECT 
     * 
 FROM dune_user_generated.index_products
-WHERE name = 'DeFi Pulse Index'
+WHERE name = 'Data Economy Index'
 ),
 
 days AS (
@@ -185,12 +184,11 @@ GROUP BY 1,3
 sushi_swaps AS (
 SELECT
         date_trunc('hour', s3."evt_block_time") AS hour,
-        ((s3."amount1In" + s3."amount1Out")*1e10)/(s3."amount0In" + s3."amount0Out") AS swap_price,
+        (s3."amount1In" + s3."amount1Out")/(s3."amount0In" + s3."amount0Out") AS swap_price,
         s3.contract_address AS swap_address
 FROM    sushi."Pair_evt_Swap" s3
 WHERE   contract_address IN (SELECT swap_address FROM index_products WHERE swap_type = 'Sushi')
 ),
-
 
 weth_prices AS (
 SELECT 
@@ -205,7 +203,7 @@ GROUP BY 2
 
 wbtc_prices AS (
 SELECT 
-    avg(price) wbtc_price, 
+    avg(price)*1e10 AS wbtc_price, 
     date_trunc('hour', minute) AS hour
 FROM prices.usd
 WHERE minute >= (SELECT MIN(inception_date) FROM index_products)
@@ -248,11 +246,12 @@ aum AS (
 SELECT
     i.day,
     i.name,
+    i.units,
     i.units * d.price AS aum,
     i.net_issue_amount * d.price AS net_inflow
 FROM all_issuance i
 LEFT JOIN daily_usd_prices d ON i.day = d.day AND i.token_address = d.token_address
-GROUP BY 1,2,3,4
+GROUP BY 1,2,3,4,5
 ),
 
 cum_net_inflows AS (

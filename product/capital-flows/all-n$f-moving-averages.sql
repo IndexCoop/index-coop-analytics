@@ -1,18 +1,17 @@
 WITH
 
 -- DASHBOARD:   https://dune.xyz/anthonybowman/Index:-Net-Inflows-Monitoring
--- QUERY:       https://dune.xyz/queries/142372/280762
--- OUTLINE:
+-- QUERY:       https://dune.xyz/queries/142697/313734
     -- index_products
     -- days
-    -- hours
     -- days_and_tokens
+    -- hours
     -- hours_and_tokens
     -- std_mint
     -- std_burn
+    -- std_issuance
     -- fli_mint
     -- fli_burn
-    -- std_issuance
     -- fli_issuance
     -- issuance
     -- all_issuance
@@ -24,26 +23,16 @@ WITH
     -- hourly_usd_prices
     -- daily_usd_prices
     -- aum
-    -- cum_net_inflow
-
+    -- moving_avg
+    
 index_products AS (
-SELECT 
-    * 
-FROM dune_user_generated.index_products
-WHERE name = 'DeFi Pulse Index'
+SELECT * FROM dune_user_generated.index_products
 ),
 
 days AS (
 SELECT 
     generate_series(min(p.inception_date)::timestamp, 
     date_trunc('day', NOW()), '1 day') as day
-FROM index_products p
-),
-
-hours AS (
-SELECT
-    generate_series(min(p.inception_date)::timestamp,
-    date_trunc('hour', NOW()), '1 hour') AS hour
 FROM index_products p
 ),
 
@@ -55,6 +44,13 @@ SELECT
     p.index_type AS index_type
 FROM days d
 CROSS JOIN index_products p
+),
+
+hours AS (
+SELECT
+    generate_series(min(p.inception_date)::timestamp,
+    date_trunc('hour', NOW()), '1 hour') AS hour
+FROM index_products p
 ),
 
 hours_and_tokens AS (
@@ -90,6 +86,18 @@ WHERE "_setToken" IN (SELECT token_address FROM index_products WHERE index_type 
 GROUP BY 1,2
 ),
 
+std_issuance AS (
+SELECT 
+    d.day,
+    d.token_address,
+    COALESCE(m.amount, 0) AS mint_amount,
+    COALESCE(b.amount, 0) AS burn_amount,
+    COALESCE(m.amount, 0) - COALESCE(b.amount, 0) AS net_issue_amount
+FROM days_and_tokens d
+LEFT JOIN std_mint m ON d.day = m.day AND d.token_address = m.token_address
+LEFT JOIN std_burn b ON d.day = b.day AND d.token_address = b.token_address
+),
+
 fli_mint AS (
 SELECT 
     date_trunc('day', evt_block_time) AS day,
@@ -101,25 +109,13 @@ GROUP BY 1,2
 ),
 
 fli_burn AS (
-SELECT 
-    date_trunc('day', evt_block_time) AS day,
-    "_setToken" AS token_address,
-    SUM("_quantity"/1e18) AS amount
-FROM setprotocol_v2."DebtIssuanceModule_evt_SetTokenRedeemed"
-WHERE "_setToken" IN (SELECT token_address FROM index_products WHERE index_type = 'Leveraged')
-GROUP BY 1,2
-),
-
-std_issuance AS (
-SELECT 
-    d.day,
-    d.token_address,
-    COALESCE(m.amount, 0) AS mint_amount,
-    COALESCE(b.amount, 0) AS burn_amount,
-    COALESCE(m.amount, 0) - COALESCE(b.amount, 0) AS net_issue_amount
-FROM days_and_tokens d
-LEFT JOIN std_mint m ON d.day = m.day AND d.token_address = m.token_address
-LEFT JOIN std_burn b ON d.day = b.day AND d.token_address = b.token_address
+    SELECT 
+        date_trunc('day', evt_block_time) AS day,
+        "_setToken" AS token_address,
+        SUM("_quantity"/1e18) AS amount
+    FROM setprotocol_v2."DebtIssuanceModule_evt_SetTokenRedeemed"
+    WHERE "_setToken" IN (SELECT token_address FROM index_products WHERE index_type = 'Leveraged')
+    GROUP BY 1,2
 ),
 
 fli_issuance AS (
@@ -165,18 +161,18 @@ FROM issuance
 
 v2swaps AS (
 SELECT
-        date_trunc('hour', s1."evt_block_time") AS hour,
-        (s1."amount1In" + s1."amount1Out")/(s1."amount0In" + s1."amount0Out") AS swap_price,
-        s1.contract_address AS swap_address
+    date_trunc('hour', s1."evt_block_time") AS hour,
+    (s1."amount1In" + s1."amount1Out")/(s1."amount0In" + s1."amount0Out") AS swap_price,
+    s1.contract_address AS swap_address
 FROM    uniswap_v2."Pair_evt_Swap" s1
 WHERE   contract_address IN (SELECT swap_address FROM index_products WHERE swap_type = 'UniswapV2')
 ),
 
 v3swaps AS (
 SELECT
-        date_trunc('hour', s2."evt_block_time") AS hour,
-        AVG((ABS(s2.amount1)) / (ABS(s2.amount0))) AS swap_price,
-        s2.contract_address AS swap_address
+    date_trunc('hour', s2."evt_block_time") AS hour,
+    AVG((ABS(s2.amount1)) / (ABS(s2.amount0))) AS swap_price,
+    s2.contract_address AS swap_address
 FROM    uniswap_v3."Pair_evt_Swap" s2
 WHERE   contract_address IN (SELECT swap_address FROM index_products WHERE swap_type = 'UniswapV3')
 GROUP BY 1,3
@@ -184,13 +180,12 @@ GROUP BY 1,3
 
 sushi_swaps AS (
 SELECT
-        date_trunc('hour', s3."evt_block_time") AS hour,
-        ((s3."amount1In" + s3."amount1Out")*1e10)/(s3."amount0In" + s3."amount0Out") AS swap_price,
-        s3.contract_address AS swap_address
+    date_trunc('hour', s3."evt_block_time") AS hour,
+    ((s3."amount1In" + s3."amount1Out"))/(s3."amount0In" + s3."amount0Out") AS swap_price,
+    s3.contract_address AS swap_address
 FROM    sushi."Pair_evt_Swap" s3
 WHERE   contract_address IN (SELECT swap_address FROM index_products WHERE swap_type = 'Sushi')
 ),
-
 
 weth_prices AS (
 SELECT 
@@ -205,7 +200,7 @@ GROUP BY 2
 
 wbtc_prices AS (
 SELECT 
-    avg(price) wbtc_price, 
+    avg(price)*1e10 AS wbtc_price, 
     date_trunc('hour', minute) AS hour
 FROM prices.usd
 WHERE minute >= (SELECT MIN(inception_date) FROM index_products)
@@ -247,19 +242,22 @@ GROUP BY 1,2
 aum AS (
 SELECT
     i.day,
+    i.token_address,
     i.name,
     i.units * d.price AS aum,
     i.net_issue_amount * d.price AS net_inflow
 FROM all_issuance i
 LEFT JOIN daily_usd_prices d ON i.day = d.day AND i.token_address = d.token_address
-GROUP BY 1,2,3,4
+GROUP BY 1,2,3,4,5
 ),
 
-cum_net_inflows AS (
-SELECT
+moving_avg AS (
+SELECT 
     *,
-    sum(net_inflow) OVER (ORDER BY day ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS cumulative_inflows
+    AVG(net_inflow) OVER (PARTITION BY name ORDER BY day ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS seven_day_ma,
+    AVG(net_inflow) OVER (PARTITION BY name ORDER BY day ROWS BETWEEN 27 PRECEDING AND CURRENT ROW) AS twenty_eight_day_ma,
+    AVG(net_inflow) OVER (PARTITION BY name ORDER BY day ROWS BETWEEN 27 PRECEDING AND CURRENT ROW) / AVG(aum) OVER (PARTITION BY name ORDER BY day ROWS BETWEEN 27 PRECEDING AND CURRENT ROW) AS twenty_eight_day_ma_aum
 FROM aum
 )
 
-SELECT * FROM cum_net_inflows
+SELECT * FROM moving_avg

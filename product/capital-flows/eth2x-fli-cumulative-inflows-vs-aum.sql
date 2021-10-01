@@ -1,7 +1,6 @@
 WITH
-
 -- DASHBOARD:   https://dune.xyz/anthonybowman/Index:-Net-Inflows-Monitoring
--- QUERY:       https://dune.xyz/queries/142372/280762
+-- QUERY:       https://dune.xyz/queries/142418/280825
 -- OUTLINE:
     -- index_products
     -- days
@@ -30,7 +29,7 @@ index_products AS (
 SELECT 
     * 
 FROM dune_user_generated.index_products
-WHERE name = 'DeFi Pulse Index'
+WHERE name = 'ETH 2X Leveraged Index'
 ),
 
 days AS (

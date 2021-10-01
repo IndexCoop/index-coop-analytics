@@ -1,7 +1,6 @@
 WITH
-
 -- DASHBOARD:   https://dune.xyz/anthonybowman/Index:-Net-Inflows-Monitoring
--- QUERY:       https://dune.xyz/queries/142372/280762
+-- QUERY:       https://dune.xyz/queries/142431/280840
 -- OUTLINE:
     -- index_products
     -- days
@@ -30,7 +29,7 @@ index_products AS (
 SELECT 
     * 
 FROM dune_user_generated.index_products
-WHERE name = 'DeFi Pulse Index'
+WHERE name = 'BTC 2X Leveraged Index'
 ),
 
 days AS (
@@ -70,6 +69,8 @@ FROM hours h
 CROSS JOIN index_products p
 ),
 
+-- Standard Mint Funtion
+
 std_mint AS (
 SELECT 
     date_trunc('day', evt_block_time) AS day, 
@@ -79,6 +80,8 @@ FROM setprotocol_v2."BasicIssuanceModule_evt_SetTokenIssued"
 WHERE "_setToken" IN (SELECT token_address FROM index_products WHERE index_type = 'Standard')
 GROUP BY 1,2
 ),
+
+-- Standard Burn Function
 
 std_burn AS (
 SELECT 
@@ -185,7 +188,7 @@ GROUP BY 1,3
 sushi_swaps AS (
 SELECT
         date_trunc('hour', s3."evt_block_time") AS hour,
-        ((s3."amount1In" + s3."amount1Out")*1e10)/(s3."amount0In" + s3."amount0Out") AS swap_price,
+        ((s3."amount1In" + s3."amount1Out"))/(s3."amount0In" + s3."amount0Out") AS swap_price,
         s3.contract_address AS swap_address
 FROM    sushi."Pair_evt_Swap" s3
 WHERE   contract_address IN (SELECT swap_address FROM index_products WHERE swap_type = 'Sushi')
@@ -205,7 +208,7 @@ GROUP BY 2
 
 wbtc_prices AS (
 SELECT 
-    avg(price) wbtc_price, 
+    avg(price)*1e10 AS wbtc_price, 
     date_trunc('hour', minute) AS hour
 FROM prices.usd
 WHERE minute >= (SELECT MIN(inception_date) FROM index_products)

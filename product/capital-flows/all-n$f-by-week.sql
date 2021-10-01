@@ -1,36 +1,9 @@
 WITH
-
 -- DASHBOARD:   https://dune.xyz/anthonybowman/Index:-Net-Inflows-Monitoring
--- QUERY:       https://dune.xyz/queries/142372/280762
--- OUTLINE:
-    -- index_products
-    -- days
-    -- hours
-    -- days_and_tokens
-    -- hours_and_tokens
-    -- std_mint
-    -- std_burn
-    -- fli_mint
-    -- fli_burn
-    -- std_issuance
-    -- fli_issuance
-    -- issuance
-    -- all_issuance
-    -- v2swaps
-    -- v3swaps
-    -- sushi_swaps
-    -- weth_prices
-    -- wbtc_prices
-    -- hourly_usd_prices
-    -- daily_usd_prices
-    -- aum
-    -- cum_net_inflow
+-- QUERY:       https://dune.xyz/queries/142311/280650
 
 index_products AS (
-SELECT 
-    * 
-FROM dune_user_generated.index_products
-WHERE name = 'DeFi Pulse Index'
+SELECT * FROM dune_user_generated.index_products
 ),
 
 days AS (
@@ -72,42 +45,42 @@ CROSS JOIN index_products p
 
 std_mint AS (
 SELECT 
-    date_trunc('day', evt_block_time) AS day, 
-    "_setToken" AS token_address,
-    SUM("_quantity"/1e18) AS amount
-FROM setprotocol_v2."BasicIssuanceModule_evt_SetTokenIssued"
-WHERE "_setToken" IN (SELECT token_address FROM index_products WHERE index_type = 'Standard')
-GROUP BY 1,2
+        date_trunc('day', evt_block_time) AS day, 
+        "_setToken" AS token_address,
+        SUM("_quantity"/1e18) AS amount
+    FROM setprotocol_v2."BasicIssuanceModule_evt_SetTokenIssued"
+    WHERE "_setToken" IN (SELECT token_address FROM index_products WHERE index_type = 'Standard')
+    GROUP BY 1,2
 ),
 
 std_burn AS (
 SELECT 
-    date_trunc('day', evt_block_time) AS day,
-    "_setToken" AS token_address,
-    SUM("_quantity"/1e18) AS amount
-FROM setprotocol_v2."BasicIssuanceModule_evt_SetTokenRedeemed"
-WHERE "_setToken" IN (SELECT token_address FROM index_products WHERE index_type = 'Standard')
-GROUP BY 1,2
+        date_trunc('day', evt_block_time) AS day,
+        "_setToken" AS token_address,
+        SUM("_quantity"/1e18) AS amount
+    FROM setprotocol_v2."BasicIssuanceModule_evt_SetTokenRedeemed"
+    WHERE "_setToken" IN (SELECT token_address FROM index_products WHERE index_type = 'Standard')
+    GROUP BY 1,2
 ),
 
 fli_mint AS (
 SELECT 
-    date_trunc('day', evt_block_time) AS day,
-    "_setToken" AS token_address,
-    SUM("_quantity"/1e18) AS amount
-FROM setprotocol_v2."DebtIssuanceModule_evt_SetTokenIssued"
-WHERE "_setToken" IN (SELECT token_address FROM index_products WHERE index_type = 'Leveraged')
-GROUP BY 1,2
+        date_trunc('day', evt_block_time) AS day,
+        "_setToken" AS token_address,
+        SUM("_quantity"/1e18) AS amount
+    FROM setprotocol_v2."DebtIssuanceModule_evt_SetTokenIssued"
+    WHERE "_setToken" IN (SELECT token_address FROM index_products WHERE index_type = 'Leveraged')
+    GROUP BY 1,2
 ),
 
 fli_burn AS (
-SELECT 
-    date_trunc('day', evt_block_time) AS day,
-    "_setToken" AS token_address,
-    SUM("_quantity"/1e18) AS amount
-FROM setprotocol_v2."DebtIssuanceModule_evt_SetTokenRedeemed"
-WHERE "_setToken" IN (SELECT token_address FROM index_products WHERE index_type = 'Leveraged')
-GROUP BY 1,2
+    SELECT 
+        date_trunc('day', evt_block_time) AS day,
+        "_setToken" AS token_address,
+        SUM("_quantity"/1e18) AS amount
+    FROM setprotocol_v2."DebtIssuanceModule_evt_SetTokenRedeemed"
+    WHERE "_setToken" IN (SELECT token_address FROM index_products WHERE index_type = 'Leveraged')
+    GROUP BY 1,2
 ),
 
 std_issuance AS (
@@ -185,7 +158,7 @@ GROUP BY 1,3
 sushi_swaps AS (
 SELECT
         date_trunc('hour', s3."evt_block_time") AS hour,
-        ((s3."amount1In" + s3."amount1Out")*1e10)/(s3."amount0In" + s3."amount0Out") AS swap_price,
+        ((s3."amount1In" + s3."amount1Out"))/(s3."amount0In" + s3."amount0Out") AS swap_price,
         s3.contract_address AS swap_address
 FROM    sushi."Pair_evt_Swap" s3
 WHERE   contract_address IN (SELECT swap_address FROM index_products WHERE swap_type = 'Sushi')
@@ -193,25 +166,25 @@ WHERE   contract_address IN (SELECT swap_address FROM index_products WHERE swap_
 
 
 weth_prices AS (
-SELECT 
-    avg(price) weth_price, 
-    date_trunc('hour', minute) AS hour
-FROM prices.usd
-WHERE minute >= (SELECT MIN(inception_date) FROM index_products)
-AND contract_address ='\xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
-AND minute >= '2020-09-10'
-GROUP BY 2
+    SELECT 
+        avg(price) weth_price, 
+        date_trunc('hour', minute) AS hour
+    FROM prices.usd
+    WHERE minute >= (SELECT MIN(inception_date) FROM index_products)
+    AND contract_address ='\xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
+    AND minute >= '2020-09-10'
+    GROUP BY 2
 ),
 
 wbtc_prices AS (
-SELECT 
-    avg(price) wbtc_price, 
-    date_trunc('hour', minute) AS hour
-FROM prices.usd
-WHERE minute >= (SELECT MIN(inception_date) FROM index_products)
-AND contract_address ='\x2260fac5e5542a773aa44fbcfedf7c193bc2c599'
-AND minute >= '2021-05-11'
-GROUP BY 2
+    SELECT 
+        avg(price)*1e10 AS wbtc_price, 
+        date_trunc('hour', minute) AS hour
+    FROM prices.usd
+    WHERE minute >= (SELECT MIN(inception_date) FROM index_products)
+    AND contract_address ='\x2260fac5e5542a773aa44fbcfedf7c193bc2c599'
+    AND minute >= '2021-05-11'
+    GROUP BY 2
 ),
 
 hourly_usd_prices AS (
@@ -236,9 +209,9 @@ GROUP BY 1,2,3
 
 daily_usd_prices AS (
 SELECT
-    d.day,
-    d.token_address,
-    AVG(h.token_usd_price) AS price
+d.day,
+d.token_address,
+AVG(h.token_usd_price) AS price
 FROM days_and_tokens d
 LEFT JOIN hourly_usd_prices h ON d.day = date_trunc('day', h.hour) AND d.token_address = h.token_address
 GROUP BY 1,2
@@ -246,20 +219,41 @@ GROUP BY 1,2
 
 aum AS (
 SELECT
-    i.day,
-    i.name,
-    i.units * d.price AS aum,
-    i.net_issue_amount * d.price AS net_inflow
+i.day,
+i.token_address,
+i.name,
+i.units * d.price AS aum,
+i.net_issue_amount * d.price AS net_inflow
 FROM all_issuance i
 LEFT JOIN daily_usd_prices d ON i.day = d.day AND i.token_address = d.token_address
-GROUP BY 1,2,3,4
+GROUP BY 1,2,3,4,5
 ),
 
-cum_net_inflows AS (
+weeks AS (
+SELECT 
+generate_series('2020-09-07 00:00'::timestamp, NOW(), '1 week') AS week_start,
+generate_series('2020-09-14 00:00'::timestamp, NOW(), '1 week') AS week_end
+),
+
+weeks_and_tokens AS (
+SELECT 
+    w.week_start,
+    w.week_end,
+    p.token_address AS token_address,
+    p.name AS name,
+    p.index_type AS index_type
+FROM weeks w
+CROSS JOIN index_products p
+),
+
+weekly_net_issue AS (
 SELECT
-    *,
-    sum(net_inflow) OVER (ORDER BY day ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS cumulative_inflows
-FROM aum
+w.week_start,
+w.name,
+sum(a.net_inflow) AS weekly_inflow
+FROM weeks_and_tokens w
+LEFT JOIN aum a ON w.week_start = date_trunc('week',a.day) AND w.token_address = a.token_address
+GROUP BY 1,2
 )
 
-SELECT * FROM cum_net_inflows
+SELECT * FROM weekly_net_issue

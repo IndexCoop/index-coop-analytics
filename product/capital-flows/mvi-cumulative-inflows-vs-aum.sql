@@ -1,7 +1,7 @@
 WITH
 
 -- DASHBOARD:   https://dune.xyz/anthonybowman/Index:-Net-Inflows-Monitoring
--- QUERY:       https://dune.xyz/queries/142372/280762
+-- QUERY:       https://dune.xyz/queries/142379/280774
 -- OUTLINE:
     -- index_products
     -- days
@@ -30,7 +30,7 @@ index_products AS (
 SELECT 
     * 
 FROM dune_user_generated.index_products
-WHERE name = 'DeFi Pulse Index'
+WHERE name = 'Metaverse Index'
 ),
 
 days AS (
@@ -70,6 +70,8 @@ FROM hours h
 CROSS JOIN index_products p
 ),
 
+-- Standard Mint Funtion
+
 std_mint AS (
 SELECT 
     date_trunc('day', evt_block_time) AS day, 
@@ -89,6 +91,8 @@ FROM setprotocol_v2."BasicIssuanceModule_evt_SetTokenRedeemed"
 WHERE "_setToken" IN (SELECT token_address FROM index_products WHERE index_type = 'Standard')
 GROUP BY 1,2
 ),
+
+-- FLI Mint Function
 
 fli_mint AS (
 SELECT 
@@ -190,7 +194,6 @@ SELECT
 FROM    sushi."Pair_evt_Swap" s3
 WHERE   contract_address IN (SELECT swap_address FROM index_products WHERE swap_type = 'Sushi')
 ),
-
 
 weth_prices AS (
 SELECT 

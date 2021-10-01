@@ -1,7 +1,7 @@
 WITH
 
 -- DASHBOARD:   https://dune.xyz/anthonybowman/Index:-Net-Inflows-Monitoring
--- QUERY:       https://dune.xyz/queries/142372/280762
+-- QUERY:       https://dune.xyz/queries/142407/280812
 -- OUTLINE:
     -- index_products
     -- days
@@ -30,7 +30,7 @@ index_products AS (
 SELECT 
     * 
 FROM dune_user_generated.index_products
-WHERE name = 'DeFi Pulse Index'
+WHERE name = 'Bankless Index'
 ),
 
 days AS (
@@ -190,7 +190,6 @@ SELECT
 FROM    sushi."Pair_evt_Swap" s3
 WHERE   contract_address IN (SELECT swap_address FROM index_products WHERE swap_type = 'Sushi')
 ),
-
 
 weth_prices AS (
 SELECT 
