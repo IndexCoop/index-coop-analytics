@@ -18,6 +18,8 @@ index_products <- list(
   list('Index Coop', 'metaverse-index', 'MVI'),
   list('Index Coop', 'btc-2x-flexible-leverage-index', 'BTC2x-FLI'),
   list('Index Coop', 'eth-2x-flexible-leverage-index', 'ETH2x-FLI'),
+  list('Index Coop', 'bankless-bed-index', 'BED'),
+  list('Index Coop', 'data-economy-index', ' DATA'),
   
   # Indexed
   list('Indexed Finance', 'defi-top-5-tokens-index', 'DEFI5'),
@@ -25,7 +27,7 @@ index_products <- list(
   list('Indexed Finance', 'degen-index', 'DEGEN'),
   list('Indexed Finance', 'oracle-top-5', 'ORCL5'),
   list('Indexed Finance', 'nft-platform-index', 'NFTP'),
-  list('Indexed Finance', '484-fund', 'ERROR'),
+  list('Indexed Finance', 'future-of-finance-fund', 'FFF'),
   
   # PowerPool
   list('PowerPool', 'power-index-pool-token', 'PIPT'),
@@ -43,7 +45,11 @@ index_products <- list(
   list('PieDAO', 'metaverse-nft-index', 'PLAY'),
   
   # BasketDAO
-  list('BasketDAO', 'basketdao-defi-index', 'BDI')
+  list('BasketDAO', 'basketdao-defi-index', 'BDI'),
+  
+  #Amun
+  list('Amun', 'amun-defi-index', 'dfi'),
+  list('Amun', 'amun-defi-momentum-index', 'dmx')
   
 )
 
@@ -88,47 +94,22 @@ for(i in 1:nrow(index)) {
 }
 
 # data frame by project/product/date
-# mutate and complete create NAs for the dates that the API isn't pulling data correctly
 product_mcaps <- final %>%
   group_by(project, symbol, date) %>%
-  summarize(market_cap = mean(market_cap))%>%
-  mutate(Date = as.Date(date)) %>%
-  complete(date = seq.Date(min(date), max(date), by="day"))
-
-#the extra date column and the project column were messing the whole thing up, get them outta here for now
-product_mcaps$Date = NULL
-product_mcaps$project = NULL
-
-#spread it out by product, then fill in NA with last available data
-product_mcaps_formatted <- product_mcaps %>%
-  spread(key = symbol, value = "market_cap") %>%
-  na.locf(na.rm = FALSE)
-
-
-product_mcaps_formatted2 <- product_mcaps_formatted %>%
-  gather(key = "symbol", value = "market_cap",
-  c(-"date"))
-
-product_mcaps_formatted3 <- merge(index, product_mcaps_formatted2, by = "symbol")
-
-product_mcaps_formatted3 <- product_mcaps_formatted3[order(product_mcaps_formatted3$date),]
+  summarize(market_cap = mean(market_cap))
 
 #data frame by project/date
-project_mcaps <- product_mcaps_formatted3 %>%
+project_mcaps <- product_mcaps %>%
   group_by(project, date) %>%
-  summarize(market_cap = sum(market_cap, na.rm = TRUE)) 
+  summarize(market_cap = sum(market_cap))
 
-#sum up the each project's mcap each day
 project_mcaps_formatted <- project_mcaps %>%
   spread(key = project, value = market_cap) %>%
   replace(is.na(.), 0)
 
-#convert data back to long format
-project_mcaps_formatted2_long <- melt(project_mcaps_formatted, id = "date")
-
 # quick visual of project AUM
-project_mcaps_formatted2_long %>%
-  ggplot(aes(x = date, y = value, color = variable)) +
+project_mcaps %>%
+  ggplot(aes(x = date, y = market_cap, color = project)) +
   geom_line() +
   scale_y_continuous(name = "Market Cap", labels = scales::comma) +
   scale_x_date(name = "") +
@@ -137,4 +118,5 @@ project_mcaps_formatted2_long %>%
 # write .csvs
 # write_csv(product_mcaps, 'index-coop-competitive-landscape-product-mcaps-2021_06_07.csv')
 # write_csv(project_mcaps, 'index-coop-competitive-landscape-project-mcaps-2021_06_07.csv')
-write_csv(project_mcaps_formatted2, 'index-coop-competitive-landscape-project-mcaps-2021_06_07.csv')
+write_csv(project_mcaps_formatted, 'index-coop-competitive-landscape-project-mcaps-2021_08_23.csv')
+
