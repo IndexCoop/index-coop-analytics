@@ -20,6 +20,8 @@ index_products <- list(
   list('Index Coop', 'metaverse-index', 'MVI'),
   list('Index Coop', 'btc-2x-flexible-leverage-index', 'BTC2x-FLI'),
   list('Index Coop', 'eth-2x-flexible-leverage-index', 'ETH2x-FLI'),
+  list('Index Coop', 'bankless-bed-index', 'BED'),
+  list('Index Coop', 'data-economy-index', 'DATA'),
   
   # Indexed
   list('Indexed Finance', 'defi-top-5-tokens-index', 'DEFI5'),
@@ -27,7 +29,7 @@ index_products <- list(
   list('Indexed Finance', 'degen-index', 'DEGEN'),
   list('Indexed Finance', 'oracle-top-5', 'ORCL5'),
   list('Indexed Finance', 'nft-platform-index', 'NFTP'),
-  list('Indexed Finance', '484-fund', 'ERROR'),
+  list('Indexed Finance', 'future-of-finance-fund', 'FFF'),
   
   # PowerPool
   list('PowerPool', 'power-index-pool-token', 'PIPT'),
@@ -45,7 +47,11 @@ index_products <- list(
   list('PieDAO', 'metaverse-nft-index', 'PLAY'),
   
   # BasketDAO
-  list('BasketDAO', 'basketdao-defi-index', 'BDI')
+  list('BasketDAO', 'basketdao-defi-index', 'BDI'),
+  
+  #Amun
+  list('Amun', 'amun-defi-index', 'dfi'),
+  list('Amun', 'amun-defi-momentum-index', 'dmx')
   
 )
 
@@ -106,11 +112,12 @@ product_mcaps_formatted <- product_mcaps %>%
   spread(key = symbol, value = "market_cap") %>%
   na.locf(na.rm = FALSE)
 
-
+#Stack it back up into 3 columns
 product_mcaps_formatted2 <- product_mcaps_formatted %>%
   gather(key = "symbol", value = "market_cap",
          c(-"date"))
 
+#re-add the project column and organize it by date
 product_mcaps_formatted3 <- merge(index, product_mcaps_formatted2, by = "symbol")
 
 product_mcaps_formatted3 <- product_mcaps_formatted3[order(product_mcaps_formatted3$date),]
@@ -128,14 +135,14 @@ project_mcaps_formatted <- project_mcaps %>%
 
 #sum of TVL by day w/ starting date of 4/15/2020 
 #(Find and replace the closing row with the number of rows in "project_mcaps_formatted)
-date_sum <- data.frame(rowSums(project_mcaps_formatted[1:457,2:6], na.rm = TRUE)) 
+date_sum <- data.frame(rowSums(project_mcaps_formatted[1:nrow(project_mcaps_formatted),2:7], na.rm = TRUE)) 
 
 #TVL by project with sum at the end
 date_with_total <- bind_cols(project_mcaps_formatted, date_sum)
 
 #Rename sum column name to not be gibberish
 #number in file name needs to be replaced as above (find and replace)
-colnames(date_with_total)[colnames(date_with_total) == "rowSums.project_mcaps_formatted.1.457..2.6...na.rm...TRUE."] <-"Total TVL"
+colnames(date_with_total)[ncol(date_with_total)] <- "Total TVL"
 
 #copy the data
 percent_of_tvl <- date_with_total
@@ -146,11 +153,13 @@ percent_of_tvl$'Index Coop %' <- (date_with_total$`Index Coop` / date_with_total
 percent_of_tvl$'NDX %' <- (date_with_total$`Indexed Finance` / date_with_total$`Total TVL`) * 100
 percent_of_tvl$'PieDAO %' <- (date_with_total$PieDAO / date_with_total$`Total TVL`) * 100
 percent_of_tvl$'PowerPool %' <- (date_with_total$PowerPool / date_with_total$`Total TVL`) * 100
+percent_of_tvl$'Amun %' <- (date_with_total$Amun / date_with_total$`Total TVL`) * 100
 
 #copy the data
 tvl2 <- percent_of_tvl
 
 #NULL out unnecessary columns
+tvl2$Amun = NULL
 tvl2$BasketDAO = NULL
 tvl2$`Index Coop` = NULL
 tvl2$`Indexed Finance` = NULL
@@ -169,9 +178,9 @@ colnames(tvl2_long)[colnames(tvl2_long) == "variable"] <- "Project"
 colnames(tvl2_long)[colnames(tvl2_long) == "date"] <- "Date"
 
 #Index True false for stylizing
- mutate(tvl2_long, isIndex = (Project == 'Index Coop %'))
- 
-#graph that shit!
+mutate(tvl2_long, isIndex = (Project == 'Index Coop %'))
+
+#graph it!
 tvl2_long %>%
   mutate(tvl2_long,isIndex = (Project == 'Index Coop %')) %>%
   ggplot(aes(x = Date, y = Percent,color = Project)) +
@@ -180,7 +189,7 @@ tvl2_long %>%
        x = "Date",
        y = "Market Share (%)",
        color = " Index Project"
-       )+
+  )+
   theme_fivethirtyeight()+
   theme(axis.title = element_text(), plot.background = element_rect(fill = "#FFFFFF"), panel.background = element_rect(fill = "#FFFFFF"), legend.background = element_rect(fill = "#FFFFFF"), legend.key = element_rect(fill = "#FFFFFF"))+
   scale_linetype_manual(values = c("dashed", "solid"), guide = "none")
