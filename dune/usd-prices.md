@@ -4,7 +4,7 @@
 
 **Prices - ERC20 Tokens**
 
-`prices.usd` ****
+`prices.usd` _\*\*_
 
 Note: This table does not include all prices for all tokens. You may need to supplement this table with prices from `dex.trades`
 
@@ -55,4 +55,3 @@ FROM dpi_eth_price_hourly a
 LEFT JOIN eth_usd_price_hourly b ON a.hour = b.hour
 )
 ```
-
