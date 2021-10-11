@@ -460,67 +460,68 @@ select distinct pool as address from uniswapv2_pool
 
 , wallet AS (
 
-    WITH transfers AS (
+    WITH wallet AS (
     
-      SELECT
-        tr."from" AS address,
-        -tr.value / 1e18 AS amount,
-        date_trunc('day', evt_block_time) AS evt_block_day,
-        'transfer' AS type,
-        evt_tx_hash
-      FROM erc20."ERC20_evt_Transfer" tr
-      WHERE contract_address = '\xaa6e8127831c9de45ae56bb1b0d4d4da6e5665bd'
+        SELECT
+            DISTINCT ON (date_trunc('day', "timestamp"), wallet_address) date_trunc('day', "timestamp") AS dt,
+            "timestamp",
+            wallet_address,
+            token_address,
+            amount_raw / 10^18 AS amount
+        FROM erc20."token_balances"
+        WHERE token_address = '\xaa6e8127831c9de45ae56bb1b0d4d4da6e5665bd'
+        ORDER BY date_trunc('day', "timestamp"), wallet_address, "timestamp" DESC
+        
+    ),
     
-      UNION ALL
+    days AS (
     
-      SELECT
-        tr."to" AS address,
-        tr.value / 1e18 AS amount,
-        date_trunc('day', evt_block_time) AS evt_block_day,
-        'transfer' AS type,
-        evt_tx_hash
-      FROM erc20."ERC20_evt_Transfer" tr
-      WHERE contract_address = '\xaa6e8127831c9de45ae56bb1b0d4d4da6e5665bd'
+        SELECT generate_series('2020-09-10'::timestamp, date_trunc('day', NOW()), '1 day') AS dt -- Generate all days
     
     ),
     
-    daily_transfers as (
-	  SELECT
-        address,
-        evt_block_day AS dt,
-        SUM(amount) AS amount
-      FROM transfers
-      GROUP BY 1, 2
-	),
-	
-	days AS 
-	(
-	  SELECT generate_series('2021-03-14'::timestamp, date_trunc('day', NOW()), '1 day') AS dt -- Generate all days
-	),
-
-	daily_transfers_w_nextday  AS (
-	  SELECT
-		a.*,
-		lead(dt,1,now()) over(partition by address order by dt) as next_dt
-	  
-	  FROM daily_transfers as a
-	),
-
-	daily_exposure AS (
-	  SELECT 
-	    address,
-		d.dt,
-		amount
-	  
-	  FROM days d
-	  inner join daily_transfers_w_nextday a on a.dt <= d.dt AND d.dt < a.next_dt
-	)
-	
-	select 
-		a.*,
-		sum(amount) over(partition by address order by dt) as exposure
-	from daily_exposure a
-	where address not in (select * from contracts_to_remove)
+    address_date AS (
+    
+        SELECT
+            DISTINCT
+            t2.dt,
+            t1.wallet_address
+        FROM wallet t1
+        CROSS JOIN (
+            SELECT
+                dt
+            FROM days
+        ) t2
+        
+    ),
+    
+    wallet_address_date AS (
+    
+        SELECT
+            ad.dt,
+            ad.wallet_address,
+            w.amount
+        FROM address_date ad
+        LEFT JOIN wallet w ON ad.dt = w.dt AND ad.wallet_address = w.wallet_address
+        ORDER BY 2, 1
+    
+    ),
+    
+    wallet_address_date_amount AS (
+    
+        SELECT
+            dt,
+            wallet_address AS address,
+            (ARRAY_REMOVE(ARRAY_AGG(amount) OVER (PARTITION BY wallet_address ORDER BY dt), NULL))[COUNT(amount) OVER (PARTITION BY wallet_address ORDER BY dt)] AS exposure
+        FROM wallet_address_date
+        
+    )
+    
+    SELECT
+        *
+    FROM wallet_address_date_amount
+    WHERE exposure IS NOT NULL AND exposure > 0
+    	AND address NOT IN (SELECT * FROM contracts_to_remove)
 
 ),
 
@@ -557,12 +558,10 @@ exposure AS (
     
     SELECT
         address
-        ,pool_name
-        ,usage
         ,dt
         ,SUM(exposure) AS exposure
     FROM combined
-    GROUP BY 1, 2, 3, 4
+    GROUP BY 1, 2
 
 )
 
