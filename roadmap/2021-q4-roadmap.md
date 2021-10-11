@@ -4,7 +4,7 @@
 
 ## Main Projects
 
-List of the primary projects we will be focusing on for the quarter and who is overseeing the project.
+List of the primary projects we will be focusing on for the quarter and who is overseeing the project. Not in any particular order.
 
 * [ ] Live Financial Statment  (Anthony)
 * [ ] Index Coop Subgraph (JD)
@@ -13,3 +13,5 @@ List of the primary projects we will be focusing on for the quarter and who is o
 * [ ] Layer 2 Dashboard
 * [ ] Growth WG Dashboard (Anthony)
 * [ ] Competitive Landscape Dashboard
+* [ ] Liquidity Analysis (Sid)
+* [ ] APAC Dashboard (Anthony)
