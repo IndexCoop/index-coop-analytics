@@ -21,3 +21,4 @@ CREATE OR REPLACE view dune_user_generated.index_addresses (wallet_address, wall
 ,('\xce3c6312385fcf233ab0de574b0cb1a588566c3f'::bytea, 'Nonvoting'::text) -- To DeFi Pulse Year 2 Vesting
 ,('\x0f58793e8cf39d6b60919ffaf773a7f95a568146'::bytea, 'Nonvoting'::text) -- To DeFi Pulse Year 3 Vesting
 ,('\x673d140eed36385cb784e279f8759f495c97cf03'::bytea, 'Nonvoting'::text) -- DPI - Methodologist Account
+,('\xcf19a7c81fcf0e01c927f28a2b551405e58c77e5'::bytea, 'Nonvoting'::text) -- Balancer Pool, cannot actually vote via IndexPowah
