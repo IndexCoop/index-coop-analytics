@@ -1,9 +1,11 @@
--- https://duneanalytics.com/queries/26491/53790
+-- https://dune.xyz/queries/121577
 
+-- REVENUE
 WITH fli_mint_burn AS (
 
     SELECT 
-        date_trunc('day', evt_block_time) AS day, 
+        date_trunc('day', evt_block_time) AS day,
+        'mint' AS action,
         SUM("_quantity"/1e18) AS amount 
         FROM setprotocol_v2."DebtIssuanceModule_evt_SetTokenIssued"
         WHERE "_setToken" = '\xaa6e8127831c9de45ae56bb1b0d4d4da6e5665bd'
@@ -12,7 +14,8 @@ WITH fli_mint_burn AS (
     UNION ALL
 
     SELECT 
-        date_trunc('day', evt_block_time) AS day, 
+        date_trunc('day', evt_block_time) AS day,
+        'redeem' AS action,
         -SUM("_quantity"/1e18) AS amount 
     FROM setprotocol_v2."DebtIssuanceModule_evt_SetTokenRedeemed" 
     WHERE "_setToken" = '\xaa6e8127831c9de45ae56bb1b0d4d4da6e5665bd'
@@ -22,7 +25,7 @@ WITH fli_mint_burn AS (
 
 fli_days AS (
     
-    SELECT generate_series('2021-03-13'::timestamp, date_trunc('day', NOW()), '1 day') AS day -- Generate all days since the first contract
+    SELECT generate_series('2021-03-15'::timestamp, date_trunc('day', NOW()), '1 day') AS day -- Generate all days since the first contract
     
 ),
 
@@ -104,11 +107,6 @@ FROM fli_temp
 
 ),
 
--- SELECT
---     *
--- FROM fli_feed
--- WHERE usd_price IS NOT NULL
-
 fli_aum AS (
 
 SELECT
@@ -124,18 +122,17 @@ fli_mint_burn_amount AS (
 
 SELECT
     day,
-    SUM(ABS(amount)) AS mint_burn_amount
+    SUM(ABS(amount)) AS amount
 FROM fli_mint_burn
 GROUP BY 1
 
 ),
 
-fli_mint_burn_fee AS (
+fli_mint_burn_revenue AS (
 
     SELECT
         a.*,
-        a.mint_burn_amount * b.usd_price AS mint_burn_dollars,
-        a.mint_burn_amount * b.usd_price * .0006 AS revenue
+        a.amount * b.usd_price * .001 AS revenue
     FROM fli_mint_burn_amount a
     LEFT JOIN fli_feed b ON a.day = b.hour
 
@@ -145,17 +142,26 @@ fli_revenue AS (
 
     SELECT
         DISTINCT
-        a.*,
-        -- a.aum * .0117/365 AS streaming_revenue,
-        -- b.revenue AS mint_burn_revenue,
-        (a.aum * .0117/365) + COALESCE(b.revenue, 0) AS revenue
+        a.day,
+        'revenue' AS detail,
+        (a.aum * .0195/365) AS streaming,
+        COALESCE(b.revenue, 0) AS mint_redeem,
+        (a.aum * .0195/365) + COALESCE(b.revenue, 0) AS total_revenue
     FROM fli_aum a
-    LEFT JOIN fli_mint_burn_fee b ON a.day = b.day
-    ORDER BY 1
+    LEFT JOIN fli_mint_burn_revenue b ON a.day = b.day
     
-)
+),
+
+revenue AS (
 
 SELECT 
     *,
-    AVG(revenue) OVER (ORDER BY day ROWS BETWEEN 7 PRECEDING AND CURRENT ROW) AS av
+    SUM(streaming) OVER (ORDER BY day ASC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS cumulative_streaming,
+    SUM(mint_redeem) OVER (ORDER BY day ASC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS cumulative_mint_redeem,
+    SUM(total_revenue) OVER (ORDER BY day ASC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS cumulative_total_revenue
 FROM fli_revenue
+ORDER BY 1
+
+)
+
+SELECT * FROM revenue

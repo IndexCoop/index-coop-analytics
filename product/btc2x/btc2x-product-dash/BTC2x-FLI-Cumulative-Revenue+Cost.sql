@@ -1,10 +1,12 @@
 -- CONTRACTS
--- BaseManager --> 0x445307De5279cD4B1BcBf38853f81b190A806075
--- SupplyCapIssuanceHook --> 0x0F1171C24B06ADed18d2d23178019A3B256401D3
--- FeeSplitAdapter --> 0x26F81381018543eCa9353bd081387F68fAE15CeD
--- FlexibleLeverageStrategyAdapter v1 --> 0x1335D01a4B572C37f800f45D9a4b36A53a898a9b
--- FlexibleLeverageStrategyAdapter v2 --> 0x90A17826C80Ea4917BBD64b281d92aAF2bBb0024
--- FlexibleLeverageStrategyAdapter v3 --> 0xF6ba6441D4DAc647898F4083483AA44Da8B1446f
+-- BaseManager --> 0xc7aede3b12daad3ffa48fc96ccb65659ff8d261a
+-- SupplyCapIssuanceHook(SupplyCapAllowedCallerIssuanceHook) --> 0x6C8137F2F552F569CC43BC4642afbe052a12441C
+-- FeeSplitAdapter --> 0xA0D95095577ecDd23C8b4c9eD0421dAc3c1DaF87
+-- FlexibleLeverageStrategyAdapter v1 --> 0x4a99733458349505A6FCbcF6CD0a0eD18666586A
+-- Hash V1 - 0x1bb07f4900b568041a8ae60012b9b1e613363fab7778794a0d76c7ddb373ebe1
+-- FlexibleLeverageStrategyAdapter v2 --> 0x6B351cdd65704D86134c183aa4BBfFb0833e4A8c
+-- Hash V2 - 0xaef6bfd06e4e43ebb3422e969b486617a36895daf1d49ded734111a66cdf9ea2
+-- FlexibleLeverageStrategyAdapter v3 --> 0x2612fA1E336cb248ee00eFD02f1C941a7A015e76
 
 -- COSTS
 
@@ -23,9 +25,9 @@ WITH flsa_transactions AS (
         block_time,
         'contract creation' AS transaction
     FROM ethereum.transactions
-    WHERE hash IN ('\x441098a773606776ed6a6ae6eba8ef0f2cf6ebf034fe8e10c3f57c666548541b',
-        '\xded787d7c49b298e3d589c2899345e46953dbd725d9330c37a2a36a4728eca67', 
-        '\xc4ff83f29d40fcc477ddb78e4905a2317c418e3cb8379e53f3cbd9c3d6f33edf')
+    WHERE hash IN ('\x1bb07f4900b568041a8ae60012b9b1e613363fab7778794a0d76c7ddb373ebe1',
+        '\xaef6bfd06e4e43ebb3422e969b486617a36895daf1d49ded734111a66cdf9ea2', 
+        '\x8c8676c6ae8cf3f34cf4efa36fcf9a49ea2d53c44e8e5af69eec52d3b8694812')
     
     UNION ALL
     
@@ -34,18 +36,19 @@ WITH flsa_transactions AS (
         block_time,
         'transfer' AS transaction
     FROM ethereum."transactions"
-    WHERE "to" IN ('\x1335D01a4B572C37f800f45D9a4b36A53a898a9b', '\x90A17826C80Ea4917BBD64b281d92aAF2bBb0024', '\xF6ba6441D4DAc647898F4083483AA44Da8B1446f')
+    WHERE "to" IN ('\x4a99733458349505A6FCbcF6CD0a0eD18666586A', '\x6B351cdd65704D86134c183aa4BBfFb0833e4A8c', '0x2612fA1E336cb248ee00eFD02f1C941a7A015e76')
         AND "from" = '\xd3d555bb655acba9452bfc6d7cea8cc7b3628c55'
     
     UNION ALL
-    -- sorting by ETH2x-Contract address in V2 of this query
+    -- sorted by BTC2x-contract addresses 
     -- v1 ripcord
     SELECT
         evt_tx_hash AS hash,
         evt_block_time AS block_time,
         'ripcord' AS transaction
     FROM setprotocol_v2."FlexibleLeverageStrategyAdapter_evt_RipcordCalled"
-    where contract_address in ('\x1335D01a4B572C37f800f45D9a4b36A53a898a9b', '\x90A17826C80Ea4917BBD64b281d92aAF2bBb0024')
+    where contract_address in ('\x4a99733458349505A6FCbcF6CD0a0eD18666586A', '\x6B351cdd65704D86134c183aa4BBfFb0833e4A8c')
+    
     -- UNION ALL
 
     -- v2 ripcord    
@@ -63,7 +66,9 @@ WITH flsa_transactions AS (
         evt_block_time AS block_time,
         'ripcord' AS transaction
     FROM setprotocol_v2."FlexibleLeverageStrategyExtension_evt_RipcordCalled"
-    where contract_address in ('\xF6ba6441D4DAc647898F4083483AA44Da8B1446f')
+    -- adding BTC2x FLI v3 Extension Address 
+    where contract_address = '\x2612fA1E336cb248ee00eFD02f1C941a7A015e76'
+    
     UNION ALL
     
     -- v1 rebalance iteration
@@ -72,7 +77,8 @@ WITH flsa_transactions AS (
         evt_block_time AS block_time,
         'rebalance iteration' AS transaction
     FROM setprotocol_v2."FlexibleLeverageStrategyAdapter_evt_RebalanceIterated"
-    where contract_address in ('\x1335D01a4B572C37f800f45D9a4b36A53a898a9b', '\x90A17826C80Ea4917BBD64b281d92aAF2bBb0024')
+    where contract_address in ('\x4a99733458349505A6FCbcF6CD0a0eD18666586A', '\x6B351cdd65704D86134c183aa4BBfFb0833e4A8c')
+    
     -- UNION ALL
     
     -- -- v2 rebalance iteration
@@ -90,8 +96,8 @@ WITH flsa_transactions AS (
         evt_block_time AS block_time,
         'rebalance iteration' AS transaction
     FROM setprotocol_v2."FlexibleLeverageStrategyExtension_evt_RebalanceIterated"
-    where contract_address in ('\xF6ba6441D4DAc647898F4083483AA44Da8B1446f')
-
+    where contract_address = '\x2612fA1E336cb248ee00eFD02f1C941a7A015e76'
+    
     UNION ALL
     
     -- v1 rebalance
@@ -100,7 +106,8 @@ WITH flsa_transactions AS (
         evt_block_time AS block_time,
         'rebalance' AS transaction
     FROM setprotocol_v2."FlexibleLeverageStrategyAdapter_evt_Rebalanced"
-    where contract_address in ('\x1335D01a4B572C37f800f45D9a4b36A53a898a9b', '\x90A17826C80Ea4917BBD64b281d92aAF2bBb0024')
+    where contract_address in ('\x4a99733458349505A6FCbcF6CD0a0eD18666586A', '\x6B351cdd65704D86134c183aa4BBfFb0833e4A8c')
+    
     -- UNION ALL
     
     -- v2 rebalance
@@ -118,7 +125,7 @@ WITH flsa_transactions AS (
         evt_block_time AS block_time,
         'rebalance' AS transaction
     FROM setprotocol_v2."FlexibleLeverageStrategyExtension_evt_Rebalanced"
-    where contract_address in ('\xF6ba6441D4DAc647898F4083483AA44Da8B1446f')
+    where contract_address = '\x2612fA1E336cb248ee00eFD02f1C941a7A015e76'
     
     UNION ALL 
     
@@ -128,7 +135,8 @@ WITH flsa_transactions AS (
         evt_block_time AS block_time,
         'update caller status' AS transaction
     FROM setprotocol_v2."FlexibleLeverageStrategyAdapter_evt_CallerStatusUpdated"
-    where contract_address in ('\x1335D01a4B572C37f800f45D9a4b36A53a898a9b', '\x90A17826C80Ea4917BBD64b281d92aAF2bBb0024')
+    where contract_address in ('\x4a99733458349505A6FCbcF6CD0a0eD18666586A', '\x6B351cdd65704D86134c183aa4BBfFb0833e4A8c')
+    
     -- UNION ALL
     
     -- -- v2 update caller status
@@ -146,7 +154,8 @@ WITH flsa_transactions AS (
         evt_block_time AS block_time,
         'update caller status' AS transaction
     FROM setprotocol_v2."FlexibleLeverageStrategyExtension_evt_CallerStatusUpdated"
-    where contract_address in ('\xF6ba6441D4DAc647898F4083483AA44Da8B1446f')
+    where contract_address = '\x2612fA1E336cb248ee00eFD02f1C941a7A015e76'
+
     
     UNION ALL
     
@@ -156,7 +165,9 @@ WITH flsa_transactions AS (
         evt_block_time AS block_time,
         'engage' AS transaction
     FROM setprotocol_v2."FlexibleLeverageStrategyAdapter_evt_Engaged"
-    where contract_address in ('\x1335D01a4B572C37f800f45D9a4b36A53a898a9b', '\x90A17826C80Ea4917BBD64b281d92aAF2bBb0024')
+    where contract_address in ('\x4a99733458349505A6FCbcF6CD0a0eD18666586A', '\x6B351cdd65704D86134c183aa4BBfFb0833e4A8c')
+
+    
     -- UNION ALL
     
     -- v2 engage
@@ -174,7 +185,8 @@ WITH flsa_transactions AS (
         evt_block_time AS block_time,
         'engage' AS transaction
     FROM setprotocol_v2."FlexibleLeverageStrategyExtension_evt_Engaged"
-    where contract_address in ('\xF6ba6441D4DAc647898F4083483AA44Da8B1446f')
+    where contract_address = '\x2612fA1E336cb248ee00eFD02f1C941a7A015e76'
+    
 
 ),
 
@@ -190,7 +202,7 @@ scih_transactions AS (
         block_time,
         'contract creation' AS transaction
     FROM ethereum.transactions
-    WHERE hash IN ('\x0a8293124630c713014c51a5265a579cf7db4d4bc9f10c5cd0756597c3eddb1c')
+    WHERE hash IN ('\x27c73aadbb455043e27cd827756b06f3f840044a407f5f2a1acbd5e1e25123ac')
     
     UNION ALL
     
@@ -200,7 +212,7 @@ scih_transactions AS (
         evt_block_time AS block_time,
         'update supply cap' AS transaction
     FROM setprotocol_v2."SupplyCapIssuanceHook_evt_SupplyCapUpdated"
-    where contract_address = '\x0F1171C24B06ADed18d2d23178019A3B256401D3'
+    where contract_address = '\x6c8137f2f552f569cc43bc4642afbe052a12441c'
     
     UNION ALL
     
@@ -210,7 +222,8 @@ scih_transactions AS (
         evt_block_time AS block_time,
         'transfer ownership' AS transaction
     FROM setprotocol_v2."SupplyCapIssuanceHook_evt_OwnershipTransferred"
-    where contract_address = '\x0F1171C24B06ADed18d2d23178019A3B256401D3'
+    where contract_address = '\x6c8137f2f552f569cc43bc4642afbe052a12441c'
+
 ),
 
 -- Fee Adapter
@@ -221,9 +234,7 @@ scih_transactions AS (
     -- Register Upgrade
     -- Update Caller Status
     -- Update Anyone Callable
-    -- Query V2 - Fee Adaper doesn't need filtering yet as BTC2x Fee Adapter data is
-    -- under different project name on Dune(by mistake). Still adding it in so it all works when 
-    -- we have new FLI products. 
+ --- Fee Adapter for BTC2x FLI was decoded under the project name SetProtocol_v2 instead of Index Coop due to a submission mistake   
 fa_transactions AS (
 
     -- contract creation
@@ -241,8 +252,7 @@ fa_transactions AS (
         call_tx_hash AS hash,
         call_block_time AS block_time,
         'update fee recipient' AS transaction
-    FROM indexcoop."FeeSplitAdapter_call_updateFeeRecipient"
-    where contract_address = '\x26F81381018543eCa9353bd081387F68fAE15CeD'
+    FROM setprotocol_v2. "FeeSplitAdapter_call_updateFeeRecipient"
     
     UNION ALL 
     
@@ -251,8 +261,7 @@ fa_transactions AS (
         evt_tx_hash AS hash,
         evt_block_time AS block_time,
         'transfer ownership' AS transaction
-    FROM indexcoop."FeeSplitAdapter_evt_OwnershipTransferred"
-    where contract_address = '\x26F81381018543eCa9353bd081387F68fAE15CeD'
+    FROM setprotocol_v2. "FeeSplitAdapter_evt_OwnershipTransferred"
     
     UNION ALL 
     
@@ -261,9 +270,8 @@ fa_transactions AS (
         evt_tx_hash AS hash,
         evt_block_time AS block_time,
         'accrue fees' AS transaction
-    FROM indexcoop."FeeSplitAdapter_evt_FeesAccrued"
-    where contract_address = '\x26F81381018543eCa9353bd081387F68fAE15CeD'
-
+    FROM setprotocol_v2. "FeeSplitAdapter_evt_FeesAccrued"
+    
     UNION ALL 
     
     -- register upgrade
@@ -271,9 +279,8 @@ fa_transactions AS (
         evt_tx_hash AS hash,
         evt_block_time AS block_time,
         'register upgrade' AS transaction
-    FROM indexcoop."FeeSplitAdapter_evt_UpgradeRegistered"
-    where contract_address = '\x26F81381018543eCa9353bd081387F68fAE15CeD'
-
+    FROM setprotocol_v2. "FeeSplitAdapter_evt_UpgradeRegistered"
+    
     UNION ALL
     
     -- update caller status
@@ -281,9 +288,8 @@ fa_transactions AS (
         evt_tx_hash AS hash,
         evt_block_time AS block_time,
         'update caller status' AS transaction
-    FROM indexcoop."FeeSplitAdapter_evt_CallerStatusUpdated"
-    where contract_address = '\x26F81381018543eCa9353bd081387F68fAE15CeD'
-
+    FROM setprotocol_v2. "FeeSplitAdapter_evt_CallerStatusUpdated"
+    
     UNION ALL
     
     -- update anyone callable
@@ -291,8 +297,8 @@ fa_transactions AS (
         evt_tx_hash AS hash,
         evt_block_time AS block_time,
         'update anyone callable' AS transaction
-    FROM indexcoop."FeeSplitAdapter_evt_AnyoneCallableUpdated"
-    where contract_address = '\x26F81381018543eCa9353bd081387F68fAE15CeD'
+    FROM setprotocol_v2. "FeeSplitAdapter_evt_AnyoneCallableUpdated"
+
 ),
 
 -- Manager
@@ -312,6 +318,8 @@ mngr_transactions AS (
     FROM ethereum.transactions
     WHERE hash IN ('\x4cc4a235a1a9d99712fc0072d73d58dd44e754ed97728d5574464b0f7d8499c7')
     
+   
+
     UNION ALL
     
     -- set manager
@@ -320,7 +328,7 @@ mngr_transactions AS (
         call_block_time AS block_time,
         'set manager' AS transaction
     FROM setprotocol_v2."BaseManager_call_setManager"
-    where contract_address = '\x445307De5279cD4B1BcBf38853f81b190A806075'
+    where contract_address = '\xC7Aede3B12daad3ffa48fc96CCB65659fF8D261a'
     
     UNION ALL
     
@@ -330,8 +338,8 @@ mngr_transactions AS (
         evt_block_time AS block_time,
         'set operator' AS transaction
     FROM setprotocol_v2."BaseManager_evt_OperatorChanged"
-    where contract_address = '\x445307De5279cD4B1BcBf38853f81b190A806075'
-
+    where contract_address = '\xC7Aede3B12daad3ffa48fc96CCB65659fF8D261a'
+    
     UNION ALL
     
     -- add adapter
@@ -340,8 +348,8 @@ mngr_transactions AS (
         evt_block_time AS block_time,
         'add adapter' AS transaction
     FROM setprotocol_v2."BaseManager_evt_AdapterAdded"
-    where contract_address = '\x445307De5279cD4B1BcBf38853f81b190A806075'
-    
+    where contract_address = '\xC7Aede3B12daad3ffa48fc96CCB65659fF8D261a'
+
     UNION ALL
     
     -- remove adapter
@@ -350,7 +358,7 @@ mngr_transactions AS (
         evt_block_time AS block_time,
         'remove adapter' AS transaction
     FROM setprotocol_v2."BaseManager_evt_AdapterRemoved"
-    where contract_address = '\x445307De5279cD4B1BcBf38853f81b190A806075'
+    where contract_address = '\xC7Aede3B12daad3ffa48fc96CCB65659fF8D261a'
 
     UNION ALL
     
@@ -360,7 +368,8 @@ mngr_transactions AS (
         evt_block_time AS block_time,
         'change methodologist' AS transaction
     FROM setprotocol_v2."BaseManager_evt_MethodologistChanged"
-    where contract_address = '\x445307De5279cD4B1BcBf38853f81b190A806075'
+    where contract_address = '\xC7Aede3B12daad3ffa48fc96CCB65659fF8D261a'
+
 ),
 
 transaction_costs_temp AS (
@@ -401,7 +410,7 @@ fli_mint_burn AS (
         'mint' AS action,
         SUM("_quantity"/1e18) AS amount 
         FROM setprotocol_v2."DebtIssuanceModule_evt_SetTokenIssued"
-        WHERE "_setToken" = '\xaa6e8127831c9de45ae56bb1b0d4d4da6e5665bd'
+        WHERE "_setToken" = '\x0b498ff89709d3838a063f1dfa463091f9801c2b'
         GROUP BY 1
 
     UNION ALL
@@ -411,7 +420,7 @@ fli_mint_burn AS (
         'redeem' AS action,
         -SUM("_quantity"/1e18) AS amount 
     FROM setprotocol_v2."DebtIssuanceModule_evt_SetTokenRedeemed" 
-    WHERE "_setToken" = '\xaa6e8127831c9de45ae56bb1b0d4d4da6e5665bd'
+    WHERE "_setToken" = '\x0b498ff89709d3838a063f1dfa463091f9801c2b'
     GROUP BY 1
     
 ),
@@ -436,7 +445,7 @@ fli AS (
 
 SELECT 
     day,
-    'ETH2X-FLI' AS product,
+    'BTC2X-FLI' AS product,
     SUM(amount) OVER (ORDER BY day) AS units
 FROM fli_units
 
@@ -445,14 +454,15 @@ FROM fli_units
 fli_swap AS (
 
 --eth/fli uni        xf91c12dae1313d0be5d7a27aa559b1171cc1eac5
+--btc2x/wbtc sushi 'x164FE0239d703379Bddde3c80e4d4800A1cd452B'
     
-    SELECT
-        date_trunc('hour', sw."evt_block_time") AS hour,
+    select 
+    date_trunc('hour', sw."evt_block_time") AS hour,
         ("amount0In" + "amount0Out")/1e18 AS a0_amt, 
-        ("amount1In" + "amount1Out")/1e18 AS a1_amt
-    FROM uniswap_v2."Pair_evt_Swap" sw
-    WHERE contract_address = '\xf91c12dae1313d0be5d7a27aa559b1171cc1eac5' -- liq pair address I am searching the price for
-        AND sw.evt_block_time >= '2021-03-14'
+        ("amount1In" + "amount1Out")/1e8 AS a1_amt
+    from sushi."Pair_evt_Swap" sw
+    where contract_address = '\x164FE0239d703379Bddde3c80e4d4800A1cd452B'
+    AND sw.evt_block_time >= '2021-03-14' -- 
 
 ),
 
@@ -463,14 +473,14 @@ fli_a1_prcs AS (
         date_trunc('hour', minute) AS hour
     FROM prices.usd
     WHERE minute >= '2021-03-12'
-        AND contract_address ='\xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2' --weth as base asset
+        AND contract_address ='\x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599' --wbtc as base asset
     GROUP BY 2
                 
 ),
 
 fli_hours AS (
     
-    SELECT generate_series('2021-03-12 00:00:00'::timestamp, date_trunc('hour', NOW()), '1 hour') AS hour -- Generate all days since the first contract
+    SELECT generate_series('2021-05-01 00:00:00'::timestamp, date_trunc('hour', NOW()), '1 hour') AS hour -- Generate all days since the first contract
     
 ),
 
@@ -479,7 +489,7 @@ fli_temp AS (
 SELECT
     h.hour,
     COALESCE(AVG((s.a1_amt/s.a0_amt)*a.a1_prc), NULL) AS usd_price, 
-    COALESCE(AVG(s.a1_amt/s.a0_amt), NULL) as eth_price
+    COALESCE(AVG(s.a1_amt/s.a0_amt), NULL) as btc_price
     -- a1_prcs."minute" AS minute
 FROM fli_hours h
 LEFT JOIN fli_swap s ON s."hour" = h.hour 
@@ -493,9 +503,9 @@ fli_feed AS (
 
 SELECT
     hour,
-    'ETH2X-FLI' AS product,
+    'BTC2X-FLI' AS product,
     (ARRAY_REMOVE(ARRAY_AGG(usd_price) OVER (ORDER BY hour), NULL))[COUNT(usd_price) OVER (ORDER BY hour)] AS usd_price,
-    (ARRAY_REMOVE(ARRAY_AGG(eth_price) OVER (ORDER BY hour), NULL))[COUNT(eth_price) OVER (ORDER BY hour)] AS eth_price
+    (ARRAY_REMOVE(ARRAY_AGG(btc_price) OVER (ORDER BY hour), NULL))[COUNT(btc_price) OVER (ORDER BY hour)] AS btc_price
 FROM fli_temp
 
 ),
@@ -537,17 +547,10 @@ fli_revenue AS (
     SELECT
         DISTINCT
         a.day,
-        'revenue - streaming' AS detail,
-        (a.aum * .0117/365) AS amount
+        'revenue' AS detail,
+        (a.aum * .0117/365) + COALESCE(b.revenue, 0) AS revenue
     FROM fli_aum a
-
-    UNION ALL
-    
-    SELECT
-        day,
-        'revenue - ' || action AS detail,
-        revenue
-    FROM fli_mint_burn_revenue
+    LEFT JOIN fli_mint_burn_revenue b ON a.day = b.day
     
 ),
 
@@ -564,31 +567,32 @@ cost AS (
 
 SELECT
     date_trunc('day', block_time) AS day,
-    'cost - ' || transaction AS detail,
-    -SUM(usd_gas_cost) AS amount
+    'cost' AS detail,
+    -SUM(usd_gas_cost) AS cost
 FROM transaction_costs
 GROUP BY 1, 2
 ORDER BY 1
 
 ),
 
-profit AS (
+agg AS (
 
-SELECT
-    *
-FROM revenue
-
-UNION
-
-SELECT 
-    *
-FROM cost
+    SELECT
+        COALESCE(r.day, c.day) AS day,
+        COALESCE(r.revenue, 0) AS revenue,
+        COALESCE(c.cost, 0) AS cost,
+        COALESCE(r.revenue, 0) + COALESCE(c.cost, 0) AS profit
+    FROM revenue r
+    FULL OUTER JOIN cost c ON r.day = c.day 
 
 )
 
 SELECT
-    *
-FROM profit
-ORDER BY 1
+    day,
+    SUM(revenue) OVER (ORDER BY day) AS revenue,
+    SUM(ABS(cost)) OVER (ORDER BY day) AS cost,
+    SUM(profit) OVER (ORDER BY day) AS profit
+FROM agg
+
 
 
