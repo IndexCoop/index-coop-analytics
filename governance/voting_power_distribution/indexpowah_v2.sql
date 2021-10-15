@@ -38,49 +38,43 @@ Deliverables for INDEX token:
 */
 
 with  
-
                     -- total number of INDEX|ETH UniLP Token over time
 uni_lp_mint as (
 select
-date_trunc('day',evt_block_time) as day,
-sum(value/1e18) as balance
-from erc20."ERC20_evt_Transfer"
-where contract_address = '\x3452a7f30a712e415a0674c0341d44ee9d9786f9' ------ minted token uniswap pool contract address
-and "from" = '\x0000000000000000000000000000000000000000'
-group by 1
+    date_trunc('day',evt_block_time) as day
+    , sum(value/1e18) as balance
+  from erc20."ERC20_evt_Transfer"
+  where contract_address = '\x3452a7f30a712e415a0674c0341d44ee9d9786f9' ------ minted token uniswap pool contract address
+    and "from" = '\x0000000000000000000000000000000000000000'
+  group by 1
 )
-
 , uni_lp_burn as (
-select
-date_trunc('day',evt_block_time) as day,
-sum(-value/1e18) as balance
-from erc20."ERC20_evt_Transfer"
-where contract_address = '\x3452a7f30a712e415a0674c0341d44ee9d9786f9' ------ burned token uniswap pool contract address
-and "to" = '\x0000000000000000000000000000000000000000'
-group by 1
+  select
+    date_trunc('day',evt_block_time) as day
+    , sum(-value/1e18) as balance
+  from erc20."ERC20_evt_Transfer"
+  where contract_address = '\x3452a7f30a712e415a0674c0341d44ee9d9786f9' ------ burned token uniswap pool contract address
+  and "to" = '\x0000000000000000000000000000000000000000'
+  group by 1
 )
-
 , uni_lp_total as (
-select * from uni_lp_mint lm
-union all
-select * from uni_lp_burn lb
+  select * from uni_lp_mint lm
+  union all
+  select * from uni_lp_burn lb
 )
-
 , generate_gap_uni_day as (
-select day, sum(balance)as index_unilp from uni_lp_total
-group by 1 
-
+  select day, sum(balance)as index_unilp from uni_lp_total
+  group by 1 
 )
 , generate_uni_days as (
-select generate_series(min(day), date_trunc('day',now()), '1 day') as day
-from uni_lp_total
+  select generate_series(min(day), date_trunc('day',now()), '1 day') as day
+  from uni_lp_total
 )
-
 , total_unilp_alldays as (
-select gu.day, coalesce(gg.index_unilp, 0) as net_lp, sum(gg.index_unilp) over (order by gu.day) as total_unilp
-from generate_uni_days gu
-left join generate_gap_uni_day gg
-on gu.day = gg.day
+  select gu.day, coalesce(gg.index_unilp, 0) as net_lp, sum(gg.index_unilp) over (order by gu.day) as total_unilp
+  from generate_uni_days gu
+  left join generate_gap_uni_day gg
+  on gu.day = gg.day
 )
                     -- end of total number of INDEX|ETH UniLP Token over time
 
