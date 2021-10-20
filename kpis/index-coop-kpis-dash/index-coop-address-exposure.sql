@@ -2042,12 +2042,10 @@ exposure AS (
     
     SELECT
         address
-        ,pool_name
-        ,usage
         ,dt
         ,SUM(exposure) AS exposure
     FROM combined
-    GROUP BY 1, 2, 3, 4
+    GROUP BY 1, 2
 
 )
     
@@ -2837,12 +2835,10 @@ exposure AS (
     
     SELECT
         address
-        ,pool_name
-        ,usage
         ,dt
         ,SUM(exposure) AS exposure
     FROM combined
-    GROUP BY 1, 2, 3, 4
+    GROUP BY 1, 2
 
 )
     
@@ -3201,12 +3197,10 @@ exposure AS (
     
     SELECT
         address
-        ,pool_name
-        ,usage
         ,dt
         ,SUM(exposure) AS exposure
     FROM combined
-    GROUP BY 1, 2, 3, 4
+    GROUP BY 1, 2
 
 )
     
@@ -3554,12 +3548,10 @@ exposure AS (
     
     SELECT
         address
-        ,pool_name
-        ,usage
         ,dt
         ,SUM(exposure) AS exposure
     FROM combined
-    GROUP BY 1, 2, 3, 4
+    GROUP BY 1, 2
 
 )
 
