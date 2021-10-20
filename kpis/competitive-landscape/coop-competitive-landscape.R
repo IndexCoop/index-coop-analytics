@@ -118,5 +118,5 @@ project_mcaps %>%
 # write .csvs
 # write_csv(product_mcaps, 'index-coop-competitive-landscape-product-mcaps-2021_06_07.csv')
 # write_csv(project_mcaps, 'index-coop-competitive-landscape-project-mcaps-2021_06_07.csv')
-write_csv(project_mcaps_formatted, 'index-coop-competitive-landscape-project-mcaps-2021_08_23.csv')
+write_csv(project_mcaps_formatted, 'index-coop-competitive-landscape-project-mcaps-2021_10_10.csv')
 
