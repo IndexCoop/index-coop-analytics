@@ -22,3 +22,9 @@ CREATE OR REPLACE view dune_user_generated.index_addresses (wallet_address, wall
 ,('\x0f58793e8cf39d6b60919ffaf773a7f95a568146'::bytea, 'Nonvoting'::text) -- To DeFi Pulse Year 3 Vesting
 ,('\x673d140eed36385cb784e279f8759f495c97cf03'::bytea, 'Nonvoting'::text) -- DPI - Methodologist Account
 ,('\xcf19a7c81fcf0e01c927f28a2b551405e58c77e5'::bytea, 'Nonvoting'::text) -- Balancer Pool, cannot actually vote via IndexPowah
+,('\x941604E66E72360691232b913b67632c26af424D'::bytea, 'Nonvoting'::text) -- FTC vesting contract, cannot actually vote via IndexPowah
+,('\xF8BDFC9bB58dC0C4d2E77e04AAc673B99D09c7Cd'::bytea, 'Nonvoting'::text) -- FTC vesting contract, cannot actually vote via IndexPowah
+,('\x5a2cAf985d71A281662E0925738e54123dA56c40'::bytea, 'Nonvoting'::text) -- FTC vesting contract, cannot actually vote via IndexPowah
+,('\xc12d290ffA999dAA837F48df99E8Bc70c2dfc26d'::bytea, 'Nonvoting'::text) -- FTC vesting contract, cannot actually vote via IndexPowah
+,('\x3cB23D1836052B20828c5D7DE80805C2c2782de6'::bytea, 'Nonvoting'::text) -- FTC vesting contract, cannot actually vote via IndexPowah
+,('\x40D4fD107B3D4ebe51b29252458631397462b016'::bytea, 'Nonvoting'::text) -- FTC vesting contract, cannot actually vote via IndexPowah
