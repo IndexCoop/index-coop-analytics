@@ -3,9 +3,9 @@ library(tidyverse)
 library(lubridate)
 
 # get all symbols
-symbols <- c('audio', 'axs', 'mana', 'dg', 'meme', 'enj', 'nftx', 'rari', 
-             'rfox', 'revv', 'tvk', 'sand', 'whale', 'gala', 'muse', 'waxp', 'chz',
-             'ern', 'ilv')
+symbols <- c('audio', 'axs', 'mana', 'dg', 'enj', 'nftx', 'rari',
+             'revv', 'tvk', 'sand', 'whale', 'gala', 'waxp', 'chz',
+             'ern', 'ilv', 'ygg', 'rare', 'super', 'wild')
 
 # if a new token needs to be added, this section will help grab the id for the token
 
@@ -18,9 +18,10 @@ symbols <- c('audio', 'axs', 'mana', 'dg', 'meme', 'enj', 'nftx', 'rari',
 # df %>% filter(symbol %in% symbols_new) %>% pull(id)
 
 # get all id's
-ids <- c('audius', 'axie-infinity', 'decentraland', 'decentral-games', 'degenerator', 'enjincoin',
-         'nftx', 'rarible', 'redfox-labs-2', 'revv', 'terra-virtua-kolect', 'the-sandbox', 'whale', 
-         'gala', 'muse-2', 'wax', 'chiliz', 'ethernity-chain', 'illuvium')
+ids <- c('audius', 'axie-infinity', 'decentraland', 'decentral-games', 'enjincoin',
+         'nftx', 'rarible', 'revv', 'terra-virtua-kolect', 'the-sandbox', 'whale', 
+         'gala', 'wax', 'chiliz', 'ethernity-chain', 'illuvium', 'yield-guild-games', 'superrare',
+         'superfarm', 'wilder-world')
 
 # query market cap and circulation data for all tokens
 for(id in ids){
@@ -77,7 +78,7 @@ f <- final %>%
   fill(-date)
 
 # write data to csv
-t %>% write_csv("mvi_token_market_caps_09_22_2021.csv")
-p %>% write_csv("mvi_token_percent_supply_09_22_2021.csv")
-f %>% write_csv("mvi_token_fully_diluted_09_22_2021.csv")
+t %>% write_csv("mvi_token_market_caps_10_22_2021.csv")
+p %>% write_csv("mvi_token_percent_supply_10_22_2021.csv")
+f %>% write_csv("mvi_token_fully_diluted_10_22_2021.csv")
 
