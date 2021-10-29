@@ -1,4 +1,6 @@
--- https://dune.xyz/queries/194587
+/* DPI Exposure of POAP holders calculated based on DEX data
+/* https://dune.xyz/queries/209954/401812 */
+
 with 
 -- Provide symbol of focal token (the token for which address exposure is needed) as input
 token as (
@@ -1023,7 +1025,17 @@ address_by_date  AS (
         FROM days
     ) t2
 
-)
+),
+
+poap_holder_balances AS (Select address,  amount, day, token_symbol
+from poap_addresses pa
+left join erc20."view_token_balances_daily" tb on tb.wallet_address = pa.address::bytea
+where token_address = '\x1494CA1F11D487c2bBe4543E90080AeBa4BA3C2b'
+),
+
+max_balance_before_event AS (
+ SELECT MAX(amount) as max_balance, address FROM poap_holder_balances WHERE day < '2021-07-15' GROUP BY address 
+),
 
 -- SELECT * FROM exposure
 
@@ -1039,14 +1051,18 @@ address_by_date  AS (
 -- FROM address_by_date a
 -- LEFT JOIN temp t ON a.address = t.address AND a.day = t.dt
 -- ORDER BY 1, 2
-
-SELECT
-CASE WHEN dt < '7-15-2021' THEN 'pre' ELSE 'post' AS period,
-    AVG(exposure) AS avg_daily_exposure
-FROM (
+daily_balances AS (
     SELECT 
         dt,
-        SUM(exposure) AS exposure
+        CASE WHEN max_balance > 0 THEN 'Existing' ELSE 'New' END as customer_type,
+        SUM(exposure) AS exposure,
+        COUNT(DISTINCT temp.address) as num_wallets
     FROM temp
-    GROUP BY 1
-) 
+    LEFT JOIN max_balance_before_event mbbe ON temp.address = mbbe.address::bytea
+    GROUP BY dt, customer_type
+)
+
+SELECT *
+FROM daily_balances
+
+

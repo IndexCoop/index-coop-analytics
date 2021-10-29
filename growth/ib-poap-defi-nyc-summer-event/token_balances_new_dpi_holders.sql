@@ -1,3 +1,6 @@
+/* DPI Token balances of new holders among POAP addresses */
+/* https://dune.xyz/queries/209954/401812 */
+
 with 
 poap_addresses AS (
 
@@ -95,14 +98,25 @@ poap_addresses AS (
             ) AS t (address)
             
 ), 
-poap_holder_balances AS (Select wallet_address,  amount, day, token_symbol
-from erc20."view_token_balances_daily"
+poap_holder_balances AS (Select address,  amount, day, token_symbol
+from poap_addresses pa
+left join erc20."view_token_balances_daily" tb on tb.wallet_address = pa.address::bytea
 where token_address = '\x1494CA1F11D487c2bBe4543E90080AeBa4BA3C2b'
-    AND wallet_address IN (                                                                                                                                                                                       
-         SELECT address::bytea FROM poap_addresses                                                                                                                                                           
-    )  
-)
+),
 
-SELECT * from poap_holder_balances
+max_balance_before_event AS (
+ SELECT MAX(amount) as max_balance, address FROM poap_holder_balances WHERE day < '2021-07-15' GROUP BY address 
+),
+
+wallets_without_balance_before_event AS (SELECT pa.address FROM poap_addresses pa LEFT JOIN max_balance_before_event mb ON pa.address = mb.address WHERE max_balance ISNULL OR max_balance = 0)
+
+SELECT SUM(amount) as total_dpi_balance, COUNT(DISTINCT w.address) as holders, day
+FROM wallets_without_balance_before_event w 
+JOIN poap_holder_balances b 
+ON w.address = b.address 
+WHERE day >= '2021-07-15' AND amount > 0
+GROUP BY day
+ORDER BY day DESC;
+
 
 
