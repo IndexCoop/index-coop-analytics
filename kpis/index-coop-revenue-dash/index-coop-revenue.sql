@@ -918,7 +918,7 @@ data_revenue AS (
 SELECT
     DISTINCT
     *,
-    aum * (.005/365) AS revenue
+    aum * (.0095/365) AS revenue
 FROM data_aum
 
 )
