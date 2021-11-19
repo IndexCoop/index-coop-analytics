@@ -49,7 +49,8 @@ index_products <- list(
   
   #Amun
   list('Amun', 'amun-defi-index', 'dfi'),
-  list('Amun', 'amun-defi-momentum-index', 'dmx')
+  list('Amun', 'amun-defi-momentum-index', 'dmx'),
+  list('Amun', 'amun-polygon-ecosystem-index', 'peco')
   
 )
 
@@ -118,5 +119,5 @@ project_mcaps %>%
 # write .csvs
 # write_csv(product_mcaps, 'index-coop-competitive-landscape-product-mcaps-2021_06_07.csv')
 # write_csv(project_mcaps, 'index-coop-competitive-landscape-project-mcaps-2021_06_07.csv')
-write_csv(project_mcaps_formatted, 'index-coop-competitive-landscape-project-mcaps-2021_10_10.csv')
+write_csv(project_mcaps_formatted, 'index-coop-competitive-landscape-project-mcaps-2021_11_19.csv')
 
