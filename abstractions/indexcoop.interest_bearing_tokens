@@ -12,7 +12,7 @@ index_coop_interest_bearing_tokens as (select * from (values
 ('fETH2x-FLI-19',   'ETH2x-FLI',    'Rari Capital',         'Fuse Pool 19',     '\xf0fe94d76fd77c1d9915616261e7e19865cedc2c'::bytea,   8   ),
 ('bETH2x-FLI',      'ETH2x-FLI',    'Beta Finance',         NULL,               '\x9122c38b11888f24637ecc1fee7abc67cf346508'::bytea,   18  ),
 ('bMVI',            'MVI',          'Beta Finance',         NULL,               '\x322897F8b9eed2533540Fbb74D90ADe74D80fbfA'::bytea,   18  )
-) as t (asset_symbol, token_symbol, protocol, version, token_address, decimals)
+) as t (asset_symbol, base_symbol, protocol, version, token_address, decimals)
 )
 
 select * from index_coop_interest_bearing_tokens
