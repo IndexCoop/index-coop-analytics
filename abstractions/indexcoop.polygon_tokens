@@ -1,0 +1,10 @@
+select * from (values
+
+('DPI',         '\x85955046df4668e1dd369d2de9f3aeb98dd2a369'::bytea),
+('MVI',         '\xfe712251173a2cd5f5be2b46bb528328ea3565e1'::bytea),
+('BED',         '\xeeda694439c6fb56cbaa011cc849650b7273285b'::bytea),
+('DATA',        '\x1D607Faa0A51518a7728580C238d912747e71F7a'::bytea),
+('ETH2x-FLI',   '\x66d7fdcc7403f18cae9b0e2e8385649d2acbc12a'::bytea),
+('BTC2x-FLI',   '\x4b54Bc363f5F9c6E0fcd82EaC6919aE213464Cc6'::bytea),
+('ETH2x-FLI-P', '\x3ad707da309f3845cd602059901e39c4dcd66473'::bytea)
+) as t (symbol, token_address)
