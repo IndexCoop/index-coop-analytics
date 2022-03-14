@@ -1,4 +1,5 @@
 -- https://dune.xyz/queries/313689
+-- TODO: split out the noncirculating addresses into its own day-level balance query to minimize the number of row comparisons
 CREATE OR REPLACE view dune_user_generated.indexcoop_index_supply AS
 
 with
@@ -77,9 +78,9 @@ select
     total.units - COALESCE(SUM(nc.amount),0) as circulating_supply
 from        days d
 left join   erc20.view_token_balances_daily nc on d.day = nc.day
+inner join  param on nc.token_address = param.token_address
+inner join  addresses nc.wallet_address = addresses.address
 left join   total_supply total on d.day = total.day
-where       nc.token_address = (select token_address from param)
-and         nc.wallet_address in (select address from addresses)
 group by    d.day, total_supply
 order by    day desc
 )
