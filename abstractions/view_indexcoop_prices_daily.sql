@@ -19,7 +19,7 @@ select
 from        dex."trades" a
 inner join  dune_user_generated."indexcoop_tokens" b on a.token_a_address = b.token_address
 inner join  eligible_pairs ep on a.token_b_symbol = ep.symbol
-where a.block_time > '2020-03-13' -- this is the last cache date
+where a.block_time > '2022-03-13' -- this is the last cache date
 
 union all
 
@@ -31,7 +31,7 @@ select
 from        dex."trades" a
 inner join  dune_user_generated."indexcoop_tokens" b on a.token_b_address = b.token_address
 inner join  eligible_pairs ep on a.token_a_symbol = ep.symbol
-where a.block_time > '2020-03-13'
+where a.block_time > '2022-03-13'
 ),
 
 base_prices as (
@@ -41,7 +41,7 @@ select
     p.price
 from        prices.usd p
 inner join  eligible_pairs ep on p.symbol = ep.symbol
-where       minute >= '2020-09-10'
+where       minute >= '2022-03-13' -- Cache date
 ),
 
 usd_trades as (
