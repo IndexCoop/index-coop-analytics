@@ -10,6 +10,9 @@ CREATE TABLE if not exists dune_user_generated.indexcoop_tokens
       )
 ;
 
+create index on dune_user_generated.indexcoop_tokens(token_address)
+create index on dune_user_generated.indexcoop_tokens(symbol)
+
 truncate table dune_user_generated.indexcoop_tokens;
 
 insert into dune_user_generated.indexcoop_tokens 
