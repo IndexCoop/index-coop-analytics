@@ -1,5 +1,6 @@
 
 -- https://duneanalytics.com/queries/53279/105647
+-- TODO: This query had its namespace updated. Double check the data sources to ensure there's no duplication.
 
 -- V2 query here - https://duneanalytics.com/queries/93652
 -- CONTRACTS

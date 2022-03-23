@@ -1,3 +1,6 @@
+-- TODO: This query had its namespace updated. Double check the data sources to ensure there's no duplication.
+-- TODO: Find the prod dune query that this code refers to.
+
 -- CONTRACTS
 -- BaseManager --> 0x445307De5279cD4B1BcBf38853f81b190A806075
 -- SupplyCapIssuanceHook --> 0x0F1171C24B06ADed18d2d23178019A3B256401D3
