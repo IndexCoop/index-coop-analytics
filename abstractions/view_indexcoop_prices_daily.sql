@@ -1,3 +1,5 @@
+-- Ethereum - 
+
 CREATE OR REPLACE VIEW 
 dune_user_generated.indexcoop_prices_daily as
 

@@ -11,6 +11,10 @@ create table if not exists dune_user_generated.indexcoop_derivative_tokens
   token_type varchar          
 );
 
+create index on dune_user_generated.indexcoop_derivative_tokens(token_address);
+create index on dune_user_generated.indexcoop_derivative_tokens(symbol);
+create index on dune_user_generated.indexcoop_derivative_tokens(base_symbol); 
+
 truncate table dune_user_generated.indexcoop_derivative_tokens;
 
 insert into dune_user_generated.indexcoop_derivative_tokens 
