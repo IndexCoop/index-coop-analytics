@@ -12,7 +12,7 @@ CREATE TABLE if not exists dune_user_generated.indexcoop_fee_structure
         methodologist_split decimal
     )
 ;
-
+create index on dune_user_generated.indexcoop_fee_structure(symbol);
 truncate table dune_user_generated.indexcoop_fee_structure;
 
 insert into dune_user_generated.indexcoop_fee_structure

@@ -1,3 +1,6 @@
+-- TODO: This query had its namespace updated. Double check the data sources to ensure there's no duplication.
+-- TODO: Find the prod dune query that this code refers to.
+
 -- CONTRACTS
 -- BaseManager --> 0x445307De5279cD4B1BcBf38853f81b190A806075
 -- SupplyCapIssuanceHook --> 0x0F1171C24B06ADed18d2d23178019A3B256401D3
@@ -241,7 +244,7 @@ fa_transactions AS (
         call_tx_hash AS hash,
         call_block_time AS block_time,
         'update fee recipient' AS transaction
-    FROM indexcoop."FeeSplitAdapter_call_updateFeeRecipient"
+    FROM setprotocol_v2."FeeSplitAdapter_call_updateFeeRecipient"
     where contract_address = '\x26F81381018543eCa9353bd081387F68fAE15CeD'
     
     UNION ALL 
@@ -251,7 +254,7 @@ fa_transactions AS (
         evt_tx_hash AS hash,
         evt_block_time AS block_time,
         'transfer ownership' AS transaction
-    FROM indexcoop."FeeSplitAdapter_evt_OwnershipTransferred"
+    FROM setprotocol_v2."FeeSplitAdapter_evt_OwnershipTransferred"
     where contract_address = '\x26F81381018543eCa9353bd081387F68fAE15CeD'
     
     UNION ALL 
@@ -261,7 +264,7 @@ fa_transactions AS (
         evt_tx_hash AS hash,
         evt_block_time AS block_time,
         'accrue fees' AS transaction
-    FROM indexcoop."FeeSplitAdapter_evt_FeesAccrued"
+    FROM setprotocol_v2."FeeSplitAdapter_evt_FeesAccrued"
     where contract_address = '\x26F81381018543eCa9353bd081387F68fAE15CeD'
 
     UNION ALL 
@@ -271,7 +274,7 @@ fa_transactions AS (
         evt_tx_hash AS hash,
         evt_block_time AS block_time,
         'register upgrade' AS transaction
-    FROM indexcoop."FeeSplitAdapter_evt_UpgradeRegistered"
+    FROM setprotocol_v2."FeeSplitAdapter_evt_UpgradeRegistered"
     where contract_address = '\x26F81381018543eCa9353bd081387F68fAE15CeD'
 
     UNION ALL
@@ -281,7 +284,7 @@ fa_transactions AS (
         evt_tx_hash AS hash,
         evt_block_time AS block_time,
         'update caller status' AS transaction
-    FROM indexcoop."FeeSplitAdapter_evt_CallerStatusUpdated"
+    FROM setprotocol_v2."FeeSplitAdapter_evt_CallerStatusUpdated"
     where contract_address = '\x26F81381018543eCa9353bd081387F68fAE15CeD'
 
     UNION ALL
@@ -291,7 +294,7 @@ fa_transactions AS (
         evt_tx_hash AS hash,
         evt_block_time AS block_time,
         'update anyone callable' AS transaction
-    FROM indexcoop."FeeSplitAdapter_evt_AnyoneCallableUpdated"
+    FROM setprotocol_v2."FeeSplitAdapter_evt_AnyoneCallableUpdated"
     where contract_address = '\x26F81381018543eCa9353bd081387F68fAE15CeD'
 ),
 
