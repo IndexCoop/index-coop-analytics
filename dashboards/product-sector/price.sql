@@ -1,5 +1,10 @@
 -- https://dune.com/queries/1046446
+/*
 
+This query gets the daily closing price of Index Coop Sector Products using the median price from trades on DEXs in the last
+hour of each day in the range.
+
+*/
 select
     day as "Day",
     price as "Price"
