@@ -17,7 +17,7 @@ from    (
             row_number() over (partition by t.symbol, date_trunc('day', p.hour) order by p.hour desc) as rnb
         from        prices.prices_from_dex_data p
         inner join  dune_user_generated."indexcoop_tokens" t on t.token_address = p.contract_address
+        where       p.hour < '2022-10-01'
         ) t0
 where       t0.rnb = 1
-and         day < '2022-10-01'
 order by    symbol, day
