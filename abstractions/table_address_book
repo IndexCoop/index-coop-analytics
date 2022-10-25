@@ -1,0 +1,49 @@
+-- https://dune.com/queries/569404
+-- drop table if exists dune_user_generated.indexcoop_address_book cascade
+create table dune_user_generated.indexcoop_address_book as
+-- Last update: October 24, 2022 4:50 PM UTC by @anthonybowman
+select * from (values
+    ('\x9467cfadc9de245010df95ec6a585a506a8ad5fc'::bytea, false, false, 'Index Coop: MultiSig'),
+    ('\x4c11dfd35a4fe079b41d5d9729ed34c00d487712'::bytea, false, false, 'Set Labs: Year 2 Vesting'),
+    ('\x0f58793e8cf39d6b60919ffaf773a7f95a568146'::bytea, false, false, 'Index Coop: DeFi Pulse Year 3 Vesting'),
+    ('\x71f2b246f270c6af49e2e514ca9f362b491fbbe1'::bytea, false, false, 'Index Coop: Community Treasury Year 3 Vesting'),
+    ('\x0d627ca04a97219f182dab0dc2a23fb4a5b02a9d'::bytea, false, false, 'Set Labs: Year 3 Vesting'), 
+    ('\xb93b505ed567982e2b6756177ddd23ab5745f309'::bytea, false, false, 'Index Coop: DPI Staking Rewards'),
+    ('\xce3c6312385fcf233ab0de574b0cb1a588566c3f'::bytea, false, false, 'DeFi Pulse: Vesting Year 2'),
+    ('\xd89c642e52bd9c72bcc0778bcf4de307cc48e75a'::bytea, false, false, 'Index Coop: Community Treasury Year 2 Vesting'),
+    ('\x66a7d781828b03ee1ae678cd3fe2d595ba3b6000'::bytea, false, false, 'Index Coop: Methodologist Vesting'),
+    ('\xdd111f0fc07f4d89ed6ff96dbab19a61450b8435'::bytea, false, false, 'Index Coop: Early Community Rewards'),
+    ('\x8f06fba4684b5e0988f215a47775bb611af0f986'::bytea, false, false, 'Index Coop: Initial Liquidity Mining Rewards'),
+    ('\xFafd604d1CC8b6B3B6CC859cF80Fd902972371C1'::bytea, false, false, 'Index Coop: Operations Account'),
+    ('\xf64d061106054fe63b0aca68916266182e77e9bc'::bytea, true,  false, 'Set Labs: Year 1 Vesting'),
+    ('\x5c29aa6761803bcfda7f683eaa0ff9bddda3649d'::bytea, true,  false, 'DeFi Pulse: Vesting Year 1'),
+    ('\x26e316f5b3819264df013ccf47989fb8c891b088'::bytea, false, false, 'Index Coop: Community Treasury Year 1 Vesting'),
+    ('\xe2250424378b6a6dc912f5714cfd308a8d593986'::bytea, false, false, 'Index Coop: Treasury Committee'),
+    ('\x462A63D4405A6462b157341A78Fd1baBfD3F8065'::bytea, false, false, 'Index Coop: Investment Account'),
+    ('\x236815b32b50cc80F5C6348396b1A9B09Fd3E7f7'::bytea, false, false, 'Index Coop: Contributor Ownership Pool'),
+    -- INDEX Token
+    ('\x0954906da0bf32d5479e25f46056d22f08464cab'::bytea, true, false, 'Index Coop: INDEX Token'),
+    -- Bridges
+    ('\x674bdf20a0f284d710bc40872100128e2d66bd3f'::bytea, true, false, 'Bridge: Loopring'),
+    ('\x40ec5b33f54e0e8a33a975908c5ba1c14e5bbbdf'::bytea, true, false, 'Bridge: Polygon PoS'),
+    ('\x88ad09518695c6c3712ac10a214be5109a655671'::bytea, true, false, 'Bridge: Gnosis Chain'),
+    -- Centralized Exchanges
+    ('\x5f65f7b609678448494de4c87521cdf6cef1e932'::bytea, true, false, 'CEX: Gemini 4'),
+    ('\x562680a4dc50ed2f14d75bf31f494cfe0b8d10a1'::bytea, true, false, 'CEX: Hotbit'),
+    ('\x0093e5f2a850268c0ca3093c7ea53731296487eb'::bytea, true, false, 'CEX: Hoo.com'),
+    ('\xa9d1e08c7793af67e9d92fe308d5697fb81d3e43'::bytea, true, false, 'CEX: Coinbase 10'),
+    
+    -- Decentralized Exchanges
+    ('\xcf19a7c81fcf0e01c927f28a2b551405e58c77e5'::bytea, true, false, 'DEX: Balancer INDEX:ETH 70/30'),
+    ('\x8c13148228765ba9e84eaf940b0416a5e349a5e7'::bytea, true, false, 'DEX: Uniswap v3 INDEX:ETH 1%'),
+    ('\x3452a7f30a712e415a0674c0341d44ee9d9786f9'::bytea, true, false, 'DEX: Uniswap v2 INDEX:ETH'),
+    ('\xa73df646512c82550c2b3c0324c4eedee53b400c'::bytea, true, false, 'DEX: Sushiswap INDEX:ETH'),
+    ('\x0a3df697e872ab920f305db00450c0a372e6c970'::bytea, true, false, 'DEX: Bancor INDEX:BNT'),
+    -- FT Contributor Vesting Packages
+    ('\x40d4fd107b3d4ebe51b29252458631397462b016'::bytea, true, false, 'FT Vesting 1'),
+    ('\x3cb23d1836052b20828c5d7de80805c2c2782de6'::bytea, true, false, 'FT Vesting 2'),
+    ('\xc12d290ffa999daa837f48df99e8bc70c2dfc26d'::bytea, true, false, 'FT Vesting 3'),
+    ('\x5a2caf985d71a281662e0925738e54123da56c40'::bytea, true, false, 'FT Vesting 4'),
+    ('\xf8bdfc9bb58dc0c4d2e77e04aac673b99d09c7cd'::bytea, true, false, 'FT Vesting 5'),
+    ('\x941604e66e72360691232b913b67632c26af424d'::bytea, true, false, 'FT Vesting 6')
+    ) as t (address, circulating, voting, name)
