@@ -1,0 +1,37 @@
+-- https://dune.com/queries/1428761
+with
+
+daily_summary as (
+select
+    t.day,
+    sum(t.issue_vol * f.issue_fee + t.redeem_vol * f.redeem_fee + t.tvl * f.streaming_fee/365) as revenue,
+    sum(t.nsf) as nsf,
+    sum(t.tvl) as tvl
+from    (
+        select
+            s.day,
+            s.symbol,
+            s.unit_flows,
+            s.supply,
+            p.price,
+            s.issue_units * p.price as issue_vol,
+            s.redeem_units * p.price as redeem_vol,
+            s.unit_flows * p.price as nsf,
+            s.supply * p.price as tvl
+            from        dune_user_generated.indexcoop_supply_daily s
+            left join   dune_user_generated.indexcoop_prices_daily p on s.day = p.day and s.symbol = p.symbol
+        ) t
+left join   dune_user_generated.indexcoop_fee_structure f on f.day = t.day and f.symbol = t.symbol
+group by    1
+),
+
+summary as (
+select
+    *,
+    sum(nsf) over (order by day asc) as c_nsf
+from    daily_summary
+)
+
+select * from summary
+where   day > date_trunc('day', least('{{End Date:}}', now())) - interval '{{Trailing Days:}} days'
+and     day <= date_trunc('day', least('{{End Date:}}', now()))
