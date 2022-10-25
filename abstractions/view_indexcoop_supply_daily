@@ -1,5 +1,6 @@
 -- https://dune.com/queries/1457110
 
+-- drop view if exists dune_user_generated.indexcoop_supply_daily 
 CREATE OR REPLACE VIEW 
 dune_user_generated.indexcoop_supply_daily as
 
@@ -9,6 +10,8 @@ flows as (
 select
     day,
     symbol,
+    sum(amount) filter (where amount > 0) as issue_units,
+    -sum(amount) filter (where amount < 0) as redeem_units,
     sum(amount) as unit_flows
 from        (
             select
@@ -46,6 +49,8 @@ supply as (
 select
     dt.day,
     dt.symbol,
+    coalesce(f.issue_units,0) as issue_units,
+    coalesce(f.redeem_units,0) as redeem_units,
     coalesce(f.unit_flows,0) as unit_flows,
     sum(f.unit_flows) over (partition by dt.symbol order by dt.day asc rows between unbounded preceding and current row) as supply
 from        days_tokens dt
