@@ -1,0 +1,42 @@
+-- https://dune.com/queries/1307961
+-- Visualization 1: Bar Chart of Total Flows Each Day w/ 30 and 7DMA
+with
+
+daily_summary as (
+select
+    s.day, s.symbol, s.unit_flows, s.supply,
+    p.price,
+    s.unit_flows * p.price as nsf,
+    s.supply * p.price as tvl
+from        dune_user_generated.indexcoop_supply_daily s
+left join   dune_user_generated.indexcoop_prices_daily p on s.day = p.day and s.symbol = p.symbol
+),
+
+total as (
+select
+    day, 'Total' as symbol,
+    0 as unit_flows, 0 as supply, 0 as price,
+    sum(nsf) as nsf,
+    sum(tvl) as tvl
+from daily_summary
+group by 1,2,3,4,5
+),
+
+summary as (
+-- select * from daily_summary
+-- union
+select * from total
+),
+
+final as (
+select 
+    day,
+    nsf,
+    avg(nsf) over (rows between 29 preceding and current row) as nsf_30dma,
+    avg(nsf) over (rows between 6 preceding and current row) as nsf_7dma
+from summary
+)
+
+select * from final
+where    day > date_trunc('day', least('{{End Date:}}', now())) - interval '{{Trailing Days:}} days'
+and     day <= date_trunc('day', least('{{End Date:}}', now()))
