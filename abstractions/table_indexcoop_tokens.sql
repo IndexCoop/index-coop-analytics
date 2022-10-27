@@ -24,5 +24,6 @@ insert into dune_user_generated.indexcoop_tokens
 ('GMI',         'Bankless DeFi Innovation Index',   'Composite',    '\x47110d43175f7f2c2425e7d15792acc5817eb44f'::bytea),
 ('icETH',       'Interest Compounding ETH',         'Yield',        '\x7C07F7aBe10CE8e33DC6C5aD68FE033085256A84'::bytea),
 ('JPG',         'NFT Index',                        'Composite',    '\x02e7ac540409d32c90bfb51114003a9e1ff0249c'::bytea),
-('FIXED-DAI',   'Fixed Rate Yield Index (DAI)',     'Yield',        '\x660B2B56C987da5Eb1D0366fbe99163203AE1008'::bytea)
+('FIXED-DAI',   'Fixed Rate Yield Index (DAI)',     'Yield',        '\x660B2B56C987da5Eb1D0366fbe99163203AE1008'::bytea),
+('CMI',         'Compound Money Market Index',      'Yield',        '\x87a5F13f08EB61f513eddA70dA88C58B8c8a74fc'::bytea)
 ;
