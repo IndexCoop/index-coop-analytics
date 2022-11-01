@@ -177,7 +177,9 @@ asteth * steth_price as steth_deposit,
 variabledebtweth * eth_price as eth_debt, 
 (asteth * steth_price) * 0.83 as deposit_value_at_liquidation,
 (1 - ((variabledebtweth * eth_price)/((asteth * steth_price) * 0.83))) as Price_drop, 
-steth_price * ((variabledebtweth * eth_price)/((asteth * steth_price) * 0.83)) as stETH_liquidation_price
+steth_price * ((variabledebtweth * eth_price)/((asteth * steth_price) * 0.83)) as stETH_liquidation_price,
+steth_price / eth_price as current_steth_eth_price,
+steth_price * ((variabledebtweth * eth_price)/((asteth * steth_price) * 0.83)) / eth_price as liquidation_steth_eth_price
 from final_table
 
 
