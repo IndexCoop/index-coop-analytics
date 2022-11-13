@@ -1,4 +1,4 @@
--- https://dune.com/queries/1581433
+-- https://dune.com/queries/1581462
 
 create or replace view dune_user_generated.aave_weth_borrow_rate_hourly as (
 with
@@ -18,7 +18,7 @@ and         "evt_block_time" >= '2022-03-20'
 
 select
     gs.hour,
-    sum(rate * seconds) / 3600 as rate
+    sum(rate * seconds) / sum(seconds) as rate
 from        (select generate_series('2022-03-20 00:00', date_trunc('hour', now()), '1 hour') as hour) gs
 left join   (
             -- start hour
