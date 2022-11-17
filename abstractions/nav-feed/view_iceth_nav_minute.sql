@@ -1,5 +1,5 @@
 -- https://dune.com/queries/1627897
--- create or replace view dune_user_generated.indexcoop_iceth_nav_minute as
+create or replace view dune_user_generated.indexcoop_iceth_nav_minute as
 select * from (
 select * from dune_user_generated.indexcoop_iceth_nav_minute_cache 
 union
