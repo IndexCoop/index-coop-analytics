@@ -1,3 +1,4 @@
+-- https://dune.com/queries/1627222
 -- drop table if exists dune_user_generated.indexcoop_iceth_nav_minute  cascade
 create table if not exists dune_user_generated.indexcoop_iceth_nav_minute as
 
